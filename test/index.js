@@ -108,3 +108,14 @@ test('it should understand inheritance of permissions', function(t) {
   // We should use a document store for this and calculate all the inherited_permissions at write time. This will mean that writes are slow, but reads are super fast. That's totally fine for this use case.
   // The logic to update all of the inherited permissions at write time will be a little messy with some recursion, but that's okay.
 });
+
+test('it should not allow a circular inheritance structure to be created', function(t) {
+  /**
+   * Create three entities, one, two and three.
+   * Give one permission over two
+   * Give two permission over three
+   * Everything should be okay
+   * Attempt to give three permission over one
+   * You should get a 4xx and the permission should not be added
+  **/
+});
