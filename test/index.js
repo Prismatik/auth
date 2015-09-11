@@ -105,12 +105,6 @@ test('it should understand inheritance of permissions', function(t) {
    * There are four Entities in the system. Adam and Chai are users. Team and Coaches are groups. Adam and Chai both hold the permission `member` over Team. Adam holds the permission `owner` over Coaches. Coaches holds the permission `admin` over Team. Adam has the permission `admin` over Team.
   **/
 
-  // When we want to generate the inherited permissions array for an Entity we need to recursively walk the chain of other Entities they're associated with.
-  // That's not so bad in the case of getting a single Entity by ID and generating the inherited array for it.
-  // Where it gets a little gnarly is when we want to find all Entities that have a given permission over a given entity. If this search is to include inherited permissions (which it _must_ in order to be useful) then in the worst case we must walk the graph for every Entity in the system.
-  // That's obviously silly, but there must be a better way to do it.
-  // In a document database we could just have the inherited_permissions array be always populated in the document. The problem sets in when we remove the permission `owner` from Managers, we must then go and modify Alice's inherited_permissions array.
-  // I can't at this minute figure out what we'd do in an RDBMS. My brain is saying that foreign keys would only get us one layer of inheritance rather than n layers, but I might be wrong about that in either direction.
-  // I suspect that the correct answer is _probably_ a graph database. I know stuff all about them, though.
-  // Maybe something like RethinkDB's composable filters would give us what we need, but I'm not sure how it'd handle the recursion.
+  // We should use a document store for this and calculate all the inherited_permissions at write time. This will mean that writes are slow, but reads are super fast. That's totally fine for this use case.
+  // The logic to update all of the inherited permissions at write time will be a little messy with some recursion, but that's okay.
 });
