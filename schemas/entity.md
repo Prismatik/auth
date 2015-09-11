@@ -1,12 +1,12 @@
-# user - users
+# entity - entities
 
-A user object
+An entity
 
 The schema defines the following properties:
 
 ## `id` (string)
 
-unique identifier of user
+unique identifier of entity
 
 ## `rev` (string)
 
@@ -14,11 +14,11 @@ unique identifier of a revision
 
 ## `created_at` (string)
 
-when user was created
+when entity was created
 
 ## `updated_at` (string)
 
-when user was updated
+when entity was updated
 
 ## `emails` (array)
 
@@ -52,6 +52,16 @@ The array object has the following properties:
 
 ### `entity` (string)
 
+## `inherited_permissions` (array)
+
+The object is an array with all elements of the type `object`.
+
+The array object has the following properties:
+
+### `type` (string)
+
+### `entity` (string)
+
 ---
 
 # Sub Schemas
@@ -60,7 +70,7 @@ The schema defines the following additional types:
 
 ## `id` (string)
 
-unique identifier of user
+unique identifier of entity
 
 ## `rev` (string)
 
@@ -68,11 +78,11 @@ unique identifier of a revision
 
 ## `created_at` (string)
 
-when user was created
+when entity was created
 
 ## `updated_at` (string)
 
-when user was updated
+when entity was updated
 
 ## `emails` (array)
 
