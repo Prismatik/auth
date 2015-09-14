@@ -102,7 +102,7 @@ test('it should understand inheritance of permissions', function(t) {
   **/
 
   /**
-   * There are four Entities in the system. Adam and Chai are users. Team and Coaches are groups. Adam and Chai both hold the permission `member` over Team. Adam holds the permission `owner` over Coaches. Coaches holds the permission `admin` over Team. Adam has the permission `admin` over Team.
+   * Inheritance must be linear. There are three entities in the system. Francois is a user. Le Boulangerie and Gazza's Beans are groups. Francois holds the permission `purchaser` over Le Boulangerie. Le Boulangerie holds the permission `customer` over Gazza's Beans. Francois must _not_ be a customer of Gazza's Beans.
   **/
 
   // We should use a document store for this and calculate all the inherited_permissions at write time. This will mean that writes are slow, but reads are super fast. That's totally fine for this use case.
