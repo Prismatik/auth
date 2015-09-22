@@ -8,10 +8,6 @@ The schema defines the following properties:
 
 unique identifier of entity
 
-## `rev` (string)
-
-unique identifier of a revision
-
 ## `created_at` (string)
 
 when entity was created
@@ -24,16 +20,6 @@ when entity was updated
 
 The object is an array with all elements of the type `string`.
 
-## `sessions` (array)
-
-The object is an array with all elements of the type `object`.
-
-The array object has the following properties:
-
-### `token` (string)
-
-### `expiry` (string)
-
 ## `name` (object)
 
 Properties of the `name` object:
@@ -41,6 +27,10 @@ Properties of the `name` object:
 ### `full` (string)
 
 ### `short` (string)
+
+## `password` (string)
+
+entity's password
 
 ## `permissions` (array)
 
@@ -72,10 +62,6 @@ The schema defines the following additional types:
 
 unique identifier of entity
 
-## `rev` (string)
-
-unique identifier of a revision
-
 ## `created_at` (string)
 
 when entity was created
@@ -86,8 +72,6 @@ when entity was updated
 
 ## `emails` (array)
 
-## `sessions` (array)
-
 ## `name` (object)
 
 Properties of the `name` object:
@@ -95,6 +79,10 @@ Properties of the `name` object:
 ### `full` (string)
 
 ### `short` (string)
+
+## `password` (string)
+
+entity's password
 
 ## `permissions` (array)
 
