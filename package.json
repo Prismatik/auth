@@ -6,6 +6,9 @@
   "scripts": {
     "test": "node test/index.js"
   },
+  "engines": {
+    "node": "4.1.0"
+  },
   "author": "david@banham.id.au",
   "license": "ISC",
   "dependencies": {
