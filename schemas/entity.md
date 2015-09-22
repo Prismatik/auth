@@ -42,6 +42,10 @@ The array object has the following properties:
 
 ### `entity` (string)
 
+### `metadata` (object)
+
+Properties of the `metadata` object:
+
 ## `inherited_permissions` (array)
 
 The object is an array with all elements of the type `object`.
@@ -51,6 +55,10 @@ The array object has the following properties:
 ### `type` (string)
 
 ### `entity` (string)
+
+### `metadata` (object)
+
+Properties of the `metadata` object:
 
 ---
 
@@ -93,3 +101,7 @@ Properties of the `permission` object:
 ### `type` (string)
 
 ### `entity` (string)
+
+### `metadata` (object)
+
+Properties of the `metadata` object:

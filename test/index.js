@@ -67,6 +67,14 @@ test('it should return all Entities with a given permission', function(t) {
   // GET /entities?perm.type=membership&perm.entity=some_uuid should return an Array of the Entities you expect it to
 });
 
+test('it should return all Entities with a given permission and metadata property', function(t) {
+  // GET /entities?perm.type=membership&perm.entity=some_uuid&perm.metadata.foo=bar should return an Array of the Entities you expect it to
+});
+
+test('it should return all Entities with a given permission and metadata properties', function(t) {
+  // GET /entities?perm.type=membership&perm.entity=some_uuid&perm.metadata.foo=bar&perm.metadata.baz=quux should return an Array of the Entities you expect it to
+});
+
 test('it should not return any Entity given an invalid permission', function(t) {
   // Empty array and a 404
 });
