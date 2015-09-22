@@ -110,6 +110,32 @@
       "method": "GET",
       "rel": "self",
       "title": "Info"
+    },
+    {
+      "description": "update existing entity",
+      "href": "/entities/{(%23%2Fdefinitions%2Fid)}",
+      "method": "PATCH",
+      "rel": "update",
+      "schema": {
+        "properties": {
+          "emails": {
+            "$ref": "#/definitions/emails"
+          },
+          "name": {
+            "$ref": "#/definitions/name"
+          },
+          "password": {
+            "$ref": "#/definitions/password"
+          },
+          "permissions": {
+            "$ref": "#/definitions/permissions"
+          }
+        },
+        "type": [
+          "object"
+        ]
+      },
+      "title": "Update"
     }
   ],
   "id": "/entity",
