@@ -37,25 +37,6 @@
         "format": "email"
       }
     },
-    "sessions": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "token": {
-            "type": "string",
-            "format": "uuid",
-            "example": "01234567-89ab-cdef-0123-456789abcdef"
-          },
-          "expiry": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2012-01-01T12:00:00Z"
-          }
-        }
-      }
-    },
     "name": {
       "type": "object",
       "additionalProperties": false,
@@ -112,9 +93,6 @@
     },
     "emails": {
       "$ref": "#/definitions/emails"
-    },
-    "sessions": {
-      "$ref": "#/definitions/sessions"
     },
     "name": {
       "$ref": "#/definitions/name"
