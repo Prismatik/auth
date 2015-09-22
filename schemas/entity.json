@@ -77,6 +77,34 @@
       }
     }
   },
+  "links": [
+    {
+      "description": "create a new entity",
+      "href": "/entities",
+      "method": "POST",
+      "rel": "create",
+      "schema": {
+        "properties": {
+          "emails": {
+            "$ref": "#/definitions/emails"
+          },
+          "name": {
+            "$ref": "#/definitions/name"
+          },
+          "password": {
+            "$ref": "#/definitions/password"
+          },
+          "permissions": {
+            "$ref": "#/definitions/permissions"
+          }
+        },
+        "type": [
+          "object"
+        ]
+      },
+      "title": "Create"
+    }
+  ],
   "id": "/entity",
   "properties": {
     "id": {
