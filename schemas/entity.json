@@ -130,6 +130,13 @@
         ]
       },
       "title": "Update"
+    },
+    {
+      "description": "remove an existing entity",
+      "href": "/entities/{(%23%2Fdefinitions%2Fid)}",
+      "method": "DELETE",
+      "rel": "delete",
+      "title": "Delete"
     }
   ],
   "id": "/entity",
