@@ -31,17 +31,15 @@ test('it should enforce that emails are unique', function(t) {
   // Try and POST two entities with the same email address in their emails array. It should accept the first and reject the second.
 });
 
-test('it should create a session given the correct password for a UID', function(t) {
-  // Set up an entity, then POST to /login with the entity's UID and password. It should return a Session
-  // Then GET that Entity. It should have that same Session in the sessions array
+test('it should create a token given the correct password for a UID', function(t) {
+  // Set up an entity, then POST to /login with the entity's UID and password. It should return a token
 });
 
-test('it should create a session given the correct password and an email', function(t) {
-  // Set up an entity, then POST to /login with the entity's email and password. It should return a Session
-  // Then GET that Entity. It should have that same Session in the sessions array
+test('it should create a token given the correct password and an email', function(t) {
+  // Set up an entity, then POST to /login with the entity's email and password. It should return a token
 });
 
-test('it should not create a session given the incorrect password', function(t) {
+test('it should not create a token given the incorrect password', function(t) {
 });
 
 test('it should return the Entity associated with a valid Session ID', function(t) {

@@ -24,16 +24,6 @@ when entity was updated
 
 The object is an array with all elements of the type `string`.
 
-## `sessions` (array)
-
-The object is an array with all elements of the type `object`.
-
-The array object has the following properties:
-
-### `token` (string)
-
-### `expiry` (string)
-
 ## `name` (object)
 
 Properties of the `name` object:
@@ -41,6 +31,10 @@ Properties of the `name` object:
 ### `full` (string)
 
 ### `short` (string)
+
+## `password` (string)
+
+entity's password
 
 ## `permissions` (array)
 
@@ -86,8 +80,6 @@ when entity was updated
 
 ## `emails` (array)
 
-## `sessions` (array)
-
 ## `name` (object)
 
 Properties of the `name` object:
@@ -95,6 +87,10 @@ Properties of the `name` object:
 ### `full` (string)
 
 ### `short` (string)
+
+## `password` (string)
+
+entity's password
 
 ## `permissions` (array)
 
