@@ -11,12 +11,6 @@
       "format": "uuid",
       "type": "string"
     },
-    "rev": {
-      "description": "unique identifier of a revision",
-      "example": "01234567-89ab-cdef-0123-456789abcdef",
-      "format": "uuid",
-      "type": "string"
-    },
     "created_at": {
       "description": "when entity was created",
       "example": "2012-01-01T12:00:00Z",
@@ -142,9 +136,6 @@
   "properties": {
     "id": {
       "$ref": "#/definitions/id"
-    },
-    "rev": {
-      "$ref": "#/definitions/rev"
     },
     "created_at": {
       "$ref": "#/definitions/created_at"
