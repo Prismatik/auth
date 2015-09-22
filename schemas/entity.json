@@ -103,6 +103,13 @@
         ]
       },
       "title": "Create"
+    },
+    {
+      "description": "get info for existing entity",
+      "href": "/entities/{(%23%2Fdefinitions%2Fid)}",
+      "method": "GET",
+      "rel": "self",
+      "title": "Info"
     }
   ],
   "id": "/entity",
