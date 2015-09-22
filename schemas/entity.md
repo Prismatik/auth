@@ -8,10 +8,6 @@ The schema defines the following properties:
 
 unique identifier of entity
 
-## `rev` (string)
-
-unique identifier of a revision
-
 ## `created_at` (string)
 
 when entity was created
@@ -65,10 +61,6 @@ The schema defines the following additional types:
 ## `id` (string)
 
 unique identifier of entity
-
-## `rev` (string)
-
-unique identifier of a revision
 
 ## `created_at` (string)
 
