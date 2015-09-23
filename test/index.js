@@ -1,9 +1,4 @@
-var test = require('tape');
-var tapSpec = require('tap-spec');
-
-test.createStream()
-  .pipe(tapSpec())
-  .pipe(process.stdout);
+var test = require('./tape');
 
 // Feel free to split these tests out into files, write additional ones, etc. Change the runner if you like.
 // I've written this spec in the mindset of e2e integration tests. ie: stand up a server and throw queries at it with superagent or request or similar. We should also write unit tests for the actual code as we go.
