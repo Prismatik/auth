@@ -77,6 +77,13 @@ test('it should allow composition of filters and paramaters', function(t) {
   // GET /entities?perm.type=membership&perm.entity=some_uuid&email=some_email should return an Entity if the Entity described by that email has the requested permission. If they don't have the requested permission it should 404
 });
 
+test('it should allow an Entity to be updated if the rev property matches the existing representation in the database', function(t) {
+  // CouchDB style
+});
+
+test('it should not allow an Entity to be updated if the rev property does not match the existing representation in the database', function(t) {
+});
+
 test('it should properly set the created_at property of an Entity on creation', function(t) {
 });
 
