@@ -112,7 +112,7 @@
       "title": "Info"
     },
     {
-      "description": "update existing entity",
+      "description": "update partial existing entity",
       "href": "/entities/{(%23%2Fdefinitions%2Fid)}",
       "method": "PATCH",
       "rel": "update",
@@ -131,6 +131,9 @@
             "$ref": "#/definitions/permissions"
           }
         },
+        "required": [
+          "rev"
+        ],
         "type": [
           "object"
         ]
