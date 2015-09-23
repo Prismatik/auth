@@ -112,6 +112,38 @@
       "title": "Info"
     },
     {
+      "description": "update entire existing entity",
+      "href": "/entities/{(%23%2Fdefinitions%2Fid)}",
+      "method": "PUT",
+      "rel": "update",
+      "schema": {
+        "properties": {
+          "emails": {
+            "$ref": "#/definitions/emails"
+          },
+          "name": {
+            "$ref": "#/definitions/name"
+          },
+          "password": {
+            "$ref": "#/definitions/password"
+          },
+          "permissions": {
+            "$ref": "#/definitions/permissions"
+          }
+        },
+        "required": [
+          "rev",
+          "emails",
+          "name",
+          "permissions"
+        ],
+        "type": [
+          "object"
+        ]
+      },
+      "title": "Update entire entity"
+    },
+    {
       "description": "update partial existing entity",
       "href": "/entities/{(%23%2Fdefinitions%2Fid)}",
       "method": "PATCH",
@@ -138,7 +170,7 @@
           "object"
         ]
       },
-      "title": "Update"
+      "title": "Update partial entity"
     },
     {
       "description": "remove an existing entity",
