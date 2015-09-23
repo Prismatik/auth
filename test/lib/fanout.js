@@ -52,3 +52,11 @@ test('fanout.find returns error if entity incorrect value', (t) => {
     t.end();
   });
 });
+
+test('fanout.find returns error if input missing data', (t) => {
+  var input = _.assign({}, operation, {data: null});
+  fanout.find(_.pick(input, _.identity)).catch(e => {
+    t.ok(e, 'error if data missing');
+    t.end();
+  });
+});
