@@ -20,8 +20,8 @@
     "promisify-node": "^0.2.1",
     "required_env": "^1.0.0",
     "restify": "^4.0.3",
-    "rethinkdb": "^2.1.1"
-
+    "rethinkdb": "^2.1.1",
+    "lodash": "^3.10.1"
   },
   "devDependencies": {
     "request-promise": "^0.4.3",
