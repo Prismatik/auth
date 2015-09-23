@@ -19,7 +19,8 @@
     "jsonwebtoken": "^5.0.5",
     "promisify-node": "^0.2.1",
     "required_env": "^1.0.0",
-    "restify": "^4.0.3"
+    "restify": "^4.0.3",
+    "lodash": "^3.10.1"
   },
   "devDependencies": {
     "request-promise": "^0.4.3",
