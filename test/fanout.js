@@ -1,11 +1,6 @@
 var _ = require('lodash');
-var test = require('tape');
-var tapSpec = require('tap-spec');
+var test = require('./tape');
 var fanout = require('root/lib/fanout');
-
-test.createStream()
-  .pipe(tapSpec())
-  .pipe(process.stdout);
 
 const operation = {
   action: 'add',
