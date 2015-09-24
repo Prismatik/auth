@@ -1,0 +1,7 @@
+{
+  "env": [
+    {"var": "NODE_ENV", "default": "development"},
+    {"var": "PORT", "default": 3000},
+    {"var": "JWT_SECRET", "default": "wToWfmQAFcK7n6eDbSsEyKq7"}
+  ]
+}

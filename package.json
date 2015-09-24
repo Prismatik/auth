@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node test/*.js"
+    "test": "node test/*.js",
+    "start": "node index.js"
   },
   "engines": {
     "node": "4.1.0"
@@ -14,9 +15,14 @@
   "dependencies": {
     "json-schema-deref": "^0.1.9",
     "json-schema-random": "0.0.4",
-    "json-schema-to-markdown": "^1.0.1"
+    "json-schema-to-markdown": "^1.0.1",
+    "jsonwebtoken": "^5.0.5",
+    "promisify-node": "^0.2.1",
+    "required_env": "^1.0.0",
+    "restify": "^4.0.3"
   },
   "devDependencies": {
+    "request-promise": "^0.4.3",
     "tap-spec": "^4.1.0",
     "tape": "^4.2.0"
   }
