@@ -1,0 +1,66 @@
+[{
+  "id": "015f04df-af79-450c-9c10-08bafc9a1da3",
+  "rev": "5f8f51e1-732d-418f-98a8-c9380524da50",
+  "created_at": "2012-01-01T12:00:00Z",
+  "updated_at": "2012-01-01T12:00:00Z",
+  "emails": ["alice@inchains.com.au"],
+  "name": {
+    "full": "Alice",
+    "short": "Al"
+  },
+  "password": "eVmXazS3jsJ3CozuyXB8WInflmjfGd",
+  "permissions": [],
+  "inherited_permissions": []
+},
+{
+  "id": "62bb01a7-7af2-467b-935d-fed7953d3a17",
+  "rev": "5f8f51e1-732d-418f-98a8-c9380524da50",
+  "created_at": "2012-01-01T12:00:00Z",
+  "updated_at": "2012-01-01T12:00:00Z",
+  "emails": ["bob@bobatron.com.au"],
+  "name": {
+    "full": "Bob",
+    "short": "Bob"
+  },
+  "password": "eVmXazS3jsJ3CozuyXB8WInflmjfGd",
+  "permissions": [],
+  "inherited_permissions": []
+},
+{
+  "id": "2a8c6e26-a75e-4f0a-907f-711f04833851",
+  "rev": "5f8f51e1-732d-418f-98a8-c9380524da50",
+  "created_at": "2012-01-01T12:00:00Z",
+  "updated_at": "2012-01-01T12:00:00Z",
+  "emails": ["garry@topdollarcurtains.com.au"],
+  "name": {
+    "full": "Garry",
+    "short": "Gaz"
+  },
+  "password": "eVmXazS3jsJ3CozuyXB8WInflmjfGd",
+  "permissions": [{
+    "type": "owner",
+    "entity": "015f04df-af79-450c-9c10-08bafc9a1da3"
+  }],
+  "inherited_permissions": []
+},
+{
+  "id": "7aeaafb2-d194-449c-8fa7-2cc54873ffea",
+  "rev": "5f8f51e1-732d-418f-98a8-c9380524da50",
+  "created_at": "2012-01-01T12:00:00Z",
+  "updated_at": "2012-01-01T12:00:00Z",
+  "emails": ["managers@thatplace.com.au"],
+  "name": {
+    "full": "Managers",
+    "short": "Man?"
+  },
+  "password": "",
+  "permissions": [{
+    "type": "member",
+    "entity": "62bb01a7-7af2-467b-935d-fed7953d3a17"
+  },
+  {
+    "type": "owner",
+    "entity": "2a8c6e26-a75e-4f0a-907f-711f04833851"
+  }],
+  "inherited_permissions": []
+}]
