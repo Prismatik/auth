@@ -1,4 +1,3 @@
-var promisify = require('promisify-node');
 var jwt = require('jsonwebtoken');
 var _ = require('lodash');
 var request = require('request-promise');
