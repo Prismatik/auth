@@ -21,7 +21,8 @@
     "required_env": "^1.0.0",
     "restify": "^4.0.3",
     "json-schema-validator": "git://github.com/Prismatik/json-schema-validator.git#master",
-    "lodash": "^3.10.1"
+    "lodash": "^3.10.1",
+    "rethinkdbdash": "^2.1.8"
   },
   "devDependencies": {
     "request-promise": "^0.4.3",
