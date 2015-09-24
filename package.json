@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "request-promise": "^0.4.3",
+    "proxyquire": "^1.7.2",
     "tap-spec": "^4.1.0",
     "tape": "^4.2.0"
   },
