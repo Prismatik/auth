@@ -7,13 +7,13 @@
   "definitions": {
     "id": {
       "description": "unique identifier of entity",
-      "example": "01234567-89ab-cdef-0123-456789abcdef",
+      "example": "62bb01a7-7af2-467b-935d-fed7953d3a17",
       "format": "uuid",
       "type": "string"
     },
      "rev": {
       "description": "unique identifier of a revision",
-      "example": "01234567-89ab-cdef-0123-456789abcdef",
+      "example": "62bb01a7-7af2-467b-935d-fed7953d3a17",
       "format": "uuid",
       "type": "string"
     },
@@ -72,7 +72,7 @@
         },
         "entity": {
           "type": "string",
-          "example": "01234567-89ab-cdef-0123-456789abcdef"
+          "example": "62bb01a7-7af2-467b-935d-fed7953d3a17"
         }
       }
     }

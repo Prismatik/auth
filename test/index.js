@@ -85,7 +85,7 @@ test('it should properly set the created_at property of an Entity on creation', 
 test('it should properly set the updated_at property of an Entity at update', function(t) {
 });
 
-test('it should understand inheritance of permissions', function(t) {
+test.skip('it should understand inheritance of permissions', function(t) {
   /**
    * There are three Entities in the system. Alice and Bob are users. Managers is a group. Alice has the permission `owner` over Managers. Managers has the permission `owner` over Bob. Therefore, Alice has the permission `owner` over Bob.
   **/
@@ -102,7 +102,7 @@ test('it should understand inheritance of permissions', function(t) {
   // The logic to update all of the inherited permissions at write time will be a little messy with some recursion, but that's okay.
 });
 
-test('it should not allow a circular inheritance structure to be created', function(t) {
+test.skip('it should not allow a circular inheritance structure to be created', function(t) {
   /**
    * Create three entities, one, two and three.
    * Give one permission over two

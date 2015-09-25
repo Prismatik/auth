@@ -19,11 +19,18 @@
     "jsonwebtoken": "^5.0.5",
     "promisify-node": "^0.2.1",
     "required_env": "^1.0.0",
-    "restify": "^4.0.3"
+    "restify": "^4.0.3",
+    "json-schema-validator": "git://github.com/Prismatik/json-schema-validator.git#master",
+    "lodash": "^3.10.1"
   },
   "devDependencies": {
     "request-promise": "^0.4.3",
+    "proxyquire": "^1.7.2",
     "tap-spec": "^4.1.0",
     "tape": "^4.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Prismatik/auth.git"
   }
 }
