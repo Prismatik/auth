@@ -1,14 +1,40 @@
 var test = require('./tape');
 var db = require('root/lib/db');
+var prismatikId;
+var entityId;
+var entityFromDb;
+var entity = {name: 'Larry', email: 'larry@gmail.com', permissions: []};
 
-test.only('db.createEntity must not return errors', (t) => {
-  db.createEntity({name: 'Larry'})
+test('setup', function (t) {
+  db.resetDb()
     .then(res => {
-      t.equal(res.errors, 0, 'Must have zero errors returned');
+      return db.createEntity({name: 'Prismatik'})
+    })
+    .then(res => {
+      prismatikId = res.generated_keys[0];
+    })
+    .then(res => {
+      return db.createEntity(entity)
+    })
+    .then(res => {
+      entityId = res.generated_keys[0];
+    })
+    .then(res => {
+      return db.addPermission(entityId, {type: 'developer', entity: prismatikId})
+    })
+    .then(res => {
+      return db.addPermission(entityId, {type: 'tester', entity: prismatikId})
+    })
+    .then(res => {
+      return db.getEntityById(entityId)
+    })
+    .then(res => {
+      entityFromDb = res;
+      console.log(res)
+    })
+    .then(res => {
       t.end();
     });
-    // t.equal(db.createEntity({name: 'Larry'}).errors, 0, 'Must have zero errors returned');
-    // t.end();
 });
 
 test('db.createEntity must not return errors when passing in an object', (t) => {
