@@ -1,9 +1,13 @@
 // var db = require('root/lib/db');
 
 
-exports.create = () => {};
+exports.create = (entity) => {
+  return db.createEntity(entity);
+};
 
-exports.getById = () => {};
+exports.getById = () => {
+  // return db.createEntity(entity);
+};
 
 exports.getByEmail = () => {};
 
