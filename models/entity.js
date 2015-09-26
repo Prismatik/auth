@@ -1,4 +1,4 @@
-// var db = require('root/lib/db');
+var db = require('root/lib/db');
 
 
 exports.create = (entity) => {
