@@ -1,5 +1,6 @@
 var promisify = require('promisify-node');
 var jwt = promisify(require('jsonwebtoken'));
+var entity = require('root/models/entity');
 
 module.exports = function(server) {
   server.post('/verify-token', verifyToken);
@@ -14,6 +15,10 @@ function verifyToken(req, res, next) {
 
       // Note: Add entity.getByEmail or similar and return ok/error response
       // back to client.
+      entity.getByEmail(decoded.email)
+        .then(res => {
+          res.json(200, 'Ok');
+        });
     })
     .catch(e => res.json(400, e.message));
 };
