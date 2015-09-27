@@ -1,6 +1,7 @@
 var jsonwebtoken = require('jsonwebtoken');
 var schemaValidation = require('root/routes/middleware/schema_validation');
 var config = require('root/config/index.json');
+var entity = require('root/models/entity');
 
 exports.route = function(server) {
   server.post('/entities', schemaValidation, exports.create);
@@ -8,35 +9,57 @@ exports.route = function(server) {
   server.put('/entities/:id', exports.update);
   server.del('/entities/:id', exports.delete);
 
-  server.post('/entities/:id/permissions', exports.addPermissions);
+  server.post('/entities/:id/permissions', schemaValidation, exports.createPermission);
   server.get('/entities/:id/permissions', exports.readPermissions);
-  server.del('/entities/:id/permissions', exports.removePermissions);
+  server.del('/entities/:id/permissions', exports.deletePermission);
+
 };
 
 exports.create = function(req, res, next) {
-  return res.send('working')
+  return entity.create(req.body)
+    .then(doc => {
+      res.send(doc);
+    });
 };
 
 exports.read = function(req, res, next) {
-  return res.send('working')
+    return entity.getById(req.params.id)
+    .then(doc => {
+      res.send(doc);
+    });
 };
 
 exports.update = function(req, res, next) {
-  return res.send('working')
+    return entity.update(req.body)
+    .then(doc => {
+      res.send(doc);
+    });
 };
 
 exports.delete = function(req, res, next) {
-  return res.send('working')
+    return entity.delete(req.params.id)
+    .then(doc => {
+      res.send(doc);
+    });
 };
 
-exports.addPermissions = function(req, res, next) {
-  return res.send('working')
+exports.createPermission = function(req, res, next) {
+    return entity.createPermission(req.params.id, req.body)
+    .then(doc => {
+      res.send(doc);
+    });
 };
 
 exports.readPermissions = function(req, res, next) {
-  return res.send('working')
+    return entity.getPermissions(req.params.id)
+    .then(doc => {
+      res.send(doc);
+    });
 };
 
-exports.removePermissions = function(req, res, next) {
-  return res.send('working')
+exports.deletePermission = function(req, res, next) {
+    return entity.deletePermission(req.params.id)
+    .then(doc => {
+      res.send(doc);
+    });
 };
