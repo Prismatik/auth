@@ -91,31 +91,16 @@ test('db.getEntitiesByPermission must not retrieve entities not matching the per
   });
 });
 
-test.skip('db.getEntitiesByPermission must retrieve entities matching the permission type and entity', (t) => {
+test('db.getEntitiesByPermission must retrieve entities matching the permission type and entity', (t) => {
   db.getEntitiesByPermissionType('developer').then(res => {
-    t.deepEqual(res.filter(entity => {
-      entity.permissions.filter(perm => {
-        return perm.type === 'developer';
-      })
-    }), [1], 'Must have populated array')
+    t.deepEqual(filterEntitiesByPermissions(res, {type: 'developer', entity: prismatikId}), [1], 'Must have populated array')
     t.end();
   });
 });
 
-test.skip('db.getEntitiesByPermissionType must not retrieve entities not matching the permission type', (t) => {
+test('db.getEntitiesByPermissionType must not retrieve entities not matching the permission type', (t) => {
   db.getEntitiesByPermissionType('developer').then(res => {
-    t.deepEqual(res.filter(entity => {
-      entity.permissions.filter(perm => {
-        return perm.type === 'dog trainer';
-      })
-    }), [], 'Must have empty array')
-    t.end();
-  });
-});
-
-test('db.getEntitiesByPermissionType return an array', (t) => {
-  db.getEntitiesByPermissionType('developer').then(res => {
-    t.ok(res.length, 'Must have array');
+    t.deepEqual(filterEntitiesByPermissions(res, {type: 'dog catcher'}), [], 'Must have empty array')
     t.end();
   });
 });
@@ -256,16 +241,16 @@ test('db.getPermissions must get permissions belonging to an entity for a given 
 
 test('db.removePermission must not keep old permission in permissions array', (t) => {
   db.removePermission(entityId, {type: 'tester', entity: prismatikId})
-    .then(res=>{
+    .then(res => {
       t.deepEqual(res.permissions.filter(perm => { return perm.type === 'tester'}), [], 'Must return empty Array')
       t.end();
     });
 });
 
-test.skip('db.removeInheritedPermission must not keep old permission in inherited_permissions array', (t) => {
+test('db.removeInheritedPermission must not keep old permission in inherited_permissions array', (t) => {
   db.removeInheritedPermission(entityId, {type: 'dog washer', entity: prismatikId})
-  .then(res=>{
-    t.deepEqual(res.permissions.filter(perm => { return perm.type === 'cat catcher'}), [], 'Must return empty Array')
+  .then(res => {
+    t.deepEqual(res.inherited_permissions.filter(perm => { return perm.type === 'dog washer'}), [], 'Must return empty Array')
     t.end();
   });
 });
