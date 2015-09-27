@@ -1,4 +1,5 @@
 var test = require('./tape');
+var _ = require('lodash');
 var db = require('root/lib/db');
 var prismatikId;
 var entityId;
@@ -83,13 +84,9 @@ test('db.getEntityByEmail must retrieve entity matching the email', (t) => {
   });
 });
 
-test.skip('db.getEntitiesByPermission must not retrieve entities not matching the permission type and entity', (t) => {
+test('db.getEntitiesByPermission must not retrieve entities not matching the permission type and entity', (t) => {
   db.getEntitiesByPermissionType('developer').then(res => {
-    t.deepEqual(res.filter(entity => {
-      return entity.permissions.filter(perm => {
-        return perm.type === 'dog trainer' && perm.entity === 'nope';
-      })
-    }), [], 'Must have empty array')
+    t.deepEqual(filterEntitiesByPermissions(res, {type: 'dog catcher', entity: 'nope'}), [], 'Must have empty array');
     t.end();
   });
 });
@@ -249,10 +246,10 @@ test('db.addInheritedPermission must add new permission to the inherited permiss
   });
 });
 
-test.skip('db.getPermissions must get permissions belonging to an entity for a given id', (t) => {
+test('db.getPermissions must get permissions belonging to an entity for a given id', (t) => {
   db.getPermissions(entityId)
     .then(res => {
-      t.okl(res.length, 'Must have an array of permissions');
+      t.ok(res.length, 'Must have an array of permissions');
       t.end();
     });
 });
@@ -272,3 +269,16 @@ test.skip('db.removeInheritedPermission must not keep old permission in inherite
     t.end();
   });
 });
+
+function filterEntitiesByPermissions(entities, permission) {
+  return _.filter(entities, function(entity) {
+    return _.any(entity.permissions, function(perm) {
+      if (permission.type && permission.entity)
+        return perm.type === permission.type && perm.entity === permission.entity;
+      else if (permission.type)
+        return perm.type === permission.type;
+      else if (permission.entity)
+        return perm.entity === permission.entity;
+    });
+  });
+};
