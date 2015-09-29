@@ -1,13 +1,13 @@
 var test = require('./tape');
-var _ = require('lodash');
 var db = require('root/lib/db');
+var dbTestHelper = require('root/test/db_test_helper');
 var prismatikId;
 var entityId;
 var entityFromDb;
 var entity = {name: 'Larry', email: 'larry@gmail.com', permissions: []};
 
 test('setup', function (t) {
-  db.resetDb()
+  dbTestHelper.resetDb()
     .then(res => {
       return db.createEntity({name: 'Prismatik'})
     })
@@ -86,21 +86,21 @@ test('db.getEntityByEmail must retrieve entity matching the email', (t) => {
 
 test('db.getEntitiesByPermission must not retrieve entities not matching the permission type and entity', (t) => {
   db.getEntitiesByPermissionType('developer').then(res => {
-    t.deepEqual(filterEntitiesByPermissions(res, {type: 'dog catcher', entity: 'nope'}), [], 'Must have empty array');
+    t.deepEqual(dbTestHelper.filterEntitiesByPermissions(res, {type: 'dog catcher', entity: 'nope'}), [], 'Must have empty array');
     t.end();
   });
 });
 
 test('db.getEntitiesByPermission must retrieve entities matching the permission type and entity', (t) => {
   db.getEntitiesByPermissionType('developer').then(res => {
-    t.deepEqual(filterEntitiesByPermissions(res, {type: 'developer', entity: prismatikId}), [1], 'Must have populated array')
+    t.deepEqual(dbTestHelper.filterEntitiesByPermissions(res, {type: 'developer', entity: prismatikId}), [1], 'Must have populated array')
     t.end();
   });
 });
 
 test('db.getEntitiesByPermissionType must not retrieve entities not matching the permission type', (t) => {
   db.getEntitiesByPermissionType('developer').then(res => {
-    t.deepEqual(filterEntitiesByPermissions(res, {type: 'dog catcher'}), [], 'Must have empty array')
+    t.deepEqual(dbTestHelper.filterEntitiesByPermissions(res, {type: 'dog catcher'}), [], 'Must have empty array')
     t.end();
   });
 });
@@ -254,16 +254,3 @@ test('db.removeInheritedPermission must not keep old permission in inherited_per
     t.end();
   });
 });
-
-function filterEntitiesByPermissions(entities, permission) {
-  return _.filter(entities, function(entity) {
-    return _.any(entity.permissions, function(perm) {
-      if (permission.type && permission.entity)
-        return perm.type === permission.type && perm.entity === permission.entity;
-      else if (permission.type)
-        return perm.type === permission.type;
-      else if (permission.entity)
-        return perm.entity === permission.entity;
-    });
-  });
-};
