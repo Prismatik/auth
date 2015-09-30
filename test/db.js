@@ -9,25 +9,25 @@ var entity = {name: 'Larry', email: 'larry@gmail.com', permissions: []};
 test('setup', function (t) {
   dbTestHelper.resetDb()
     .then(res => {
-      return db.create({name: 'Prismatik'});
+      return db.create('entities', {name: 'Prismatik'});
     })
     .then(res => {
-      prismatikId = res.generated_keys[0];
+      prismatikId = res.id;
     })
     .then(res => {
-      return db.create(entity);
+      return db.create('entities', entity);
     })
     .then(res => {
-      entityId = res.generated_keys[0];
+      entityId = res.id;
     })
     .then(res => {
-      return db.addPermission(entityId, {type: 'developer', entity: prismatikId});
+      return db.create('entities', {type: 'developer', entity: prismatikId}, entityId, 'permissions');
     })
     .then(res => {
-      return db.addPermission(entityId, {type: 'tester', entity: prismatikId});
+      return db.create('entities', {type: 'tester', entity: prismatikId}, entityId, 'permissions');
     })
     .then(res => {
-      return db.addInheritedPermission(entityId, {type: 'dog washer', entity: prismatikId});
+      return db.create('entities', {type: 'dog washer', entity: prismatikId}, entityId, 'inherited_permissions');
     })
     .then(res => {
       return db.get(entityId, 'entities', 'id');
@@ -42,18 +42,17 @@ test('setup', function (t) {
 });
 
 test('db.create must not return errors when passing in an object', (t) => {
-  db.create({name: 'Garry'})
+  db.create('entities', {name: 'Garry'})
     .then(res => {
-      t.equal(res.errors, 0, 'Must have not have errors');
+      t.ok(res, 'Must have not have errors');
       t.end();
     });
 });
 
 test('db.create must return new entity created when one object is passed', (t) => {
-  db.create({name: 'Arry'})
+  db.create('entities', {name: 'Arry'})
     .then(res => {
-      // t.equal(res.changes[0].new_val.name, 'Arry', 'Must have one entity inserted');
-      t.ok(res.generated_keys[0], 'Must have one generated key');
+      t.equal(res.name, 'Arry', 'Must have one entity inserted');
       t.end();
     });
 });
@@ -62,10 +61,9 @@ test('db.create must create new entities when an array of objects is passed', (t
   var entities = [
     {name: 'Barry', permissions: [{ entity: prismatikId, type: 'developer' }]},
     {name: 'Harry', permissions: [{ entity: prismatikId, type: 'tester' }]}];
-  db.create(entities)
+  db.create('entities', entities)
     .then(res => {
-      t.equal(res.inserted, entities.length, 'Must have many entries inserted');
-      t.equal(res.generated_keys.length, entities.length, 'Must have the same amount of keys for entries inserted');
+      t.equal(res.length, entities.length, 'Must have many entries inserted');
       t.end();
     });
 });
@@ -134,23 +132,28 @@ test('db.get must retrieve entities matching the permission entities', (t) => {
   });
 });
 
-test.skip('db.updateEntity must not save the old version of the entity', (t) => {
-  db.updateEntity()
-  t.end();
-});
-
-test.skip('db.updateEntity must save the new version of the entity', (t) => {
-  db.updateEntity()
-  t.end();
-});
-
-test('db.delete must not create entities', (t) => {
-  db.create({name: 'Parry'})
+test.skip('db.update must not save the old version of the entity', (t) => {
+  var updated = {id: entityId, name: 'Super Larry'}
+  db.update('entities', updated)
     .then(res => {
-      return db.get(res.generated_keys[0], 'entities', 'id');
+      t.notEqual(res.name, 'Larry', 'Must not have old name')
+      t.end();
     })
+});
+
+test.skip('db.update must save the new version of the entity', (t) => {
+  var updated = {id: entityId, name: 'Super Larry'}
+  db.update('entities', updated)
     .then(res => {
-      return db.delete(res);
+      t.equal(res, updated.name, 'Must have new name')
+      t.end();
+    })
+});
+
+test.skip('db.delete must not create entities', (t) => {
+  db.create('entities', {name: 'Parry'})
+    .then(res => {
+      return db.delete('entities', res.id);
     })
     .then(res => {
       t.equal(res.inserted, 0, 'Must not insert entries');
@@ -158,13 +161,10 @@ test('db.delete must not create entities', (t) => {
     });
 });
 
-test('db.delete must not update entities', (t) => {
-  db.create({name: 'Parry'})
+test.skip('db.delete must not update entities', (t) => {
+  db.create('entities', {name: 'Parry'})
     .then(res => {
-      return db.get(res.generated_keys[0], 'entities', 'id');
-    })
-    .then(res => {
-      return db.delete(res);
+      return db.delete('entities', res.id);
     })
     .then(res => {
       t.equal(res.replaced, 0, 'Must not replace entries');
@@ -172,13 +172,10 @@ test('db.delete must not update entities', (t) => {
     });
 });
 
-test('db.delete must delete one entity', (t) => {
-  db.create({name: 'Parry'})
+test.skip('db.delete must delete one entity', (t) => {
+  db.create('entities', {name: 'Parry'})
     .then(res => {
-      return db.get(res.generated_keys[0], 'entities', 'id');
-    })
-    .then(res => {
-      return db.delete(res);
+      return db.delete('entities', res.id);
     })
     .then(res => {
       t.equal(res.deleted, 1, 'Must have one entry deleted');
@@ -186,12 +183,12 @@ test('db.delete must delete one entity', (t) => {
     });
 });
 
-test('db.addPermission must add permissions to entity if permissions array does not exist', (t) => {
+test('db.create must add permissions to entity if permissions array does not exist', (t) => {
   var parryId;
-  db.create({name: 'Parry'})
+  db.create('entities', {name: 'Parry'})
     .then(res => {
-      parryId = res.generated_keys[0]
-      return db.addPermission(parryId, {type: 'UX Designer', entity: prismatikId});
+      parryId = res.id
+      return db.create('entities', {type: 'UX Designer', entity: prismatikId}, parryId, 'permissions');
     })
     .then(res => {
       t.deepEqual(res.permissions, [{type: 'UX Designer', entity: prismatikId}], 'Must have new permission in permissions');
@@ -199,8 +196,8 @@ test('db.addPermission must add permissions to entity if permissions array does 
     });
 });
 
-test('db.addPermission must not clear old permissions from the permissions array', (t) => {
-  db.addPermission(entityId, {type: 'UX Designer', entity: prismatikId})
+test('db.create must not clear old permissions from the permissions array', (t) => {
+  db.create('entities', {type: 'UX Designer', entity: prismatikId}, entityId, 'permissions')
     .then(res => {
       t.deepEqual(res.permissions.filter(perm => {
         return perm.type === 'tester'})[0].type, 'tester', 'Must still have tester permission');
@@ -210,8 +207,8 @@ test('db.addPermission must not clear old permissions from the permissions array
     });
 });
 
-test('db.addPermission must add new permission to the permissions array', (t) => {
-  db.addPermission(entityId, {type: 'admin', entity: prismatikId})
+test('db.create must add new permission to the permissions array', (t) => {
+  db.create('entities', {type: 'admin', entity: prismatikId}, entityId, 'permissions')
   .then(res => {
     t.deepEqual(res.permissions.filter(perm => {
       return perm.type === 'admin'})[0].type, 'admin', 'Must have new Admin permission\'s type');
@@ -221,8 +218,8 @@ test('db.addPermission must add new permission to the permissions array', (t) =>
   });
 });
 
-test('db.addInheritedPermission must add new permission to the inherited permissions array', (t) => {
-  db.addInheritedPermission(entityId, {type: 'cat catcher', entity: prismatikId})
+test('db.create must add new permission to the inherited permissions array', (t) => {
+  db.create('entities', {type: 'cat catcher', entity: prismatikId}, entityId, 'inherited_permissions')
   .then(res => {
     t.equal(res.inherited_permissions.filter(perm => {
       return perm.type === 'cat catcher'})[0].type, 'cat catcher', 'Must have new cat catcher permission\'s type');
@@ -232,16 +229,8 @@ test('db.addInheritedPermission must add new permission to the inherited permiss
   });
 });
 
-test('db.getPermissions must get permissions belonging to an entity for a given id', (t) => {
-  db.getPermissions(entityId)
-    .then(res => {
-      t.ok(res.length, 'Must have an array of permissions');
-      t.end();
-    });
-});
-
 test('db.removePermission must not keep old permission in permissions array', (t) => {
-  db.removePermission(entityId, {type: 'tester', entity: prismatikId})
+  db.delete('entities', entityId, {type: 'tester', entity: prismatikId}, 'permissions')
     .then(res => {
       t.deepEqual(res.permissions.filter(perm => { return perm.type === 'tester'}), [], 'Must return empty Array')
       t.end();
