@@ -1,4 +1,3 @@
-var jsonwebtoken = require('jsonwebtoken');
 var schemaValidation = require('root/routes/middleware/schema_validation');
 var config = require('root/config/index.json');
 var entity = require('root/models/entity');
