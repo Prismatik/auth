@@ -1,4 +1,3 @@
-
 var _ = require('lodash');
 var promisify = require('promisify-node');
 var jwt = promisify(require('jsonwebtoken'));
