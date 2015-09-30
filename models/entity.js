@@ -2,28 +2,23 @@ var db = require('root/lib/db');
 
 
 exports.create = (entity) => {
-  return db.createEntity(entity);
+  return db.create(entity);
 };
 
 exports.getById = (id) => {
-  return db.getEntity(id);
+  return db.get(id, 'entities', 'id');
 };
 
 exports.getByEmail = (email) => {
-  return db.getEntityByEmail(email);
+  return db.get(email, 'entities', 'email');
 };
 
 exports.getByPermission = (permission) => {
-  if (permission.type && permission.entity)
-    return db.getEntitiesByPermission;
-  else if (permission.type)
-    return db.getEntitiesByPermissionType;
-  else if (permission.entity)
-    return db.getEntitiesByPermissionEntity;
+  return db.get(permission, 'entities', 'permissions');
 };
 
 exports.update = (entity) => {
-  return db.updateEntity(entity);
+  return db.update(entity);
 };
 
 exports.getPermissions = (id) => {
@@ -46,6 +41,6 @@ exports.removeInheritedPermission = (id, permission) => {
   return db.removeInheritedPermission(id, permission);
 };
 
-exports.delete = (id) => {
-  return db.deleteEntity(id);
+exports.delete = (entity) => {
+  return db.delete(entity);
 };
