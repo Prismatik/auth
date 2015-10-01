@@ -21,20 +21,9 @@ test('setup', function (t) {
       entityId = res.id;
     })
     .then(res => {
-      return db.create('entities', {type: 'developer', entity: prismatikId}, entityId, 'permissions');
-    })
-    .then(res => {
-      return db.create('entities', {type: 'tester', entity: prismatikId}, entityId, 'permissions');
-    })
-    .then(res => {
-      return db.create('entities', {type: 'dog washer', entity: prismatikId}, entityId, 'inherited_permissions');
-    })
-    .then(res => {
-      return db.get(entityId, 'entities', 'id');
-    })
-    .then(res => {
-      entityFromDb = res;
-      console.log(res);
+      db.create('entities', {type: 'developer', entity: prismatikId}, entityId, 'permissions');
+      db.create('entities', {type: 'tester', entity: prismatikId}, entityId, 'permissions');
+      db.create('entities', {type: 'dog washer', entity: prismatikId}, entityId, 'inherited_permissions');
     })
     .then(res => {
       t.end();
@@ -52,7 +41,7 @@ test('db.create must not return errors when passing in an object', (t) => {
 test('db.create must return new entity created when one object is passed', (t) => {
   db.create('entities', {name: 'Arry'})
     .then(res => {
-      t.equal(res.name, 'Arry', 'Must have one entity inserted');
+      t.equal(res.name, 'Arry', 'Must have one entity inserted with matching name');
       t.end();
     });
 });
@@ -112,8 +101,7 @@ test('db.get must return empty array if there are no entities matching the permi
 
 test('db.get must retrieve entities matching the permission types', (t) => {
   db.get({type: 'developer'}, 'entities', 'permissions').then(res => {
-    t.equal(dbTestHelper.filterEntitiesByPermissions(res, {type: 'developer'}).length, 2, 'Must have an array with permission matching permission types');
-    t.equal(res.length, 2, 'Must have an array with permission matching permission types');
+    t.equal(dbTestHelper.filterEntitiesByPermissions(res, {type: 'developer'}).length, res.length, 'Must have an array with permissions only matching permission types');
     t.end();
   });
 });
@@ -232,15 +220,18 @@ test('db.create must add new permission to the inherited permissions array', (t)
 test('db.removePermission must not keep old permission in permissions array', (t) => {
   db.delete('entities', entityId, {type: 'tester', entity: prismatikId}, 'permissions')
     .then(res => {
-      t.deepEqual(res.permissions.filter(perm => { return perm.type === 'tester'}), [], 'Must return empty Array')
+      t.deepEqual(res.permissions.filter(perm => perm.type === 'tester'), [], 'Must not have tester permission');
+      t.deepEqual(res.permissions.filter(perm => perm.type === 'developer'), [{type: 'developer', entity: prismatikId}], 'Must still have old dveloper permission');
+      t.deepEqual(res.permissions.filter(perm => perm.type === 'UX Designer'), [{type: 'UX Designer', entity: prismatikId}], 'Must still have old UX permission');
       t.end();
     });
 });
 
 test('db.removeInheritedPermission must not keep old permission in inherited_permissions array', (t) => {
-  db.removeInheritedPermission(entityId, {type: 'dog washer', entity: prismatikId})
+  db.delete('entities', entityId, {type: 'dog washer', entity: prismatikId}, 'inherited_permissions')
   .then(res => {
-    t.deepEqual(res.inherited_permissions.filter(perm => { return perm.type === 'dog washer'}), [], 'Must return empty Array')
+    t.deepEqual(res.inherited_permissions.filter(perm => perm.type === 'dog washer'), [], 'Must not have dog washer inherited permission')
+    t.deepEqual(res.inherited_permissions.filter(perm => perm.type === 'cat catcher'), [{type: 'cat catcher', entity: prismatikId}], 'Must still have cat catcher inherited permission')
     t.end();
   });
 });
