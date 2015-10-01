@@ -7,24 +7,17 @@ var entityFromDb;
 var entity = {name: 'Larry', email: 'larry@gmail.com', permissions: []};
 
 test('setup', function (t) {
-  dbTestHelper.resetDb()
-    .then(res => {
-      return db.create('entities', {name: 'Prismatik'});
-    })
-    .then(res => {
-      prismatikId = res.id;
-    })
-    .then(res => {
-      return db.create('entities', entity);
-    })
-    .then(res => {
-      entityId = res.id;
-    })
-    .then(res => {
+    Promise.all([
+      dbTestHelper.resetDb(),
+      db.create('entities', {name: 'Prismatik'}),
+      db.create('entities', entity)
+    ]).then((res) => {
+      prismatikId = res[1].id;
+      entityId = res[2].id;
       db.create('entities', {type: 'developer', entity: prismatikId}, entityId, 'permissions');
       db.create('entities', {type: 'tester', entity: prismatikId}, entityId, 'permissions');
       db.create('entities', {type: 'dog washer', entity: prismatikId}, entityId, 'inherited_permissions');
-    })
+     })
     .then(res => {
       t.end();
     });
@@ -179,10 +172,8 @@ test('db.create must add permissions to entity if permissions array does not exi
 test('db.create must not clear old permissions from the permissions array', (t) => {
   db.create('entities', {type: 'UX Designer', entity: prismatikId}, entityId, 'permissions')
     .then(res => {
-      t.deepEqual(res.permissions.filter(perm => {
-        return perm.type === 'tester'})[0].type, 'tester', 'Must still have tester permission');
-      t.deepEqual(res.permissions.filter(perm => {
-        return perm.type === 'developer'})[0].type, 'developer', 'Must still have developer permission');
+      t.deepEqual(res.permissions.filter(perm => perm.type === 'tester')[0].type, 'tester', 'Must still have tester permission');
+      t.deepEqual(res.permissions.filter(perm => perm.type === 'developer')[0].type, 'developer', 'Must still have developer permission');
       t.end();
     });
 });
@@ -190,10 +181,8 @@ test('db.create must not clear old permissions from the permissions array', (t) 
 test('db.create must add new permission to the permissions array', (t) => {
   db.create('entities', {type: 'admin', entity: prismatikId}, entityId, 'permissions')
   .then(res => {
-    t.deepEqual(res.permissions.filter(perm => {
-      return perm.type === 'admin'})[0].type, 'admin', 'Must have new Admin permission\'s type');
-    t.deepEqual(res.permissions.filter(perm => {
-      return perm.type === 'admin'})[0].entity, prismatikId, 'Must have new Admin permission\'s entity id');
+    t.deepEqual(res.permissions.filter(perm => perm.type === 'admin')[0].type, 'admin', 'Must have new Admin permission\'s type');
+    t.deepEqual(res.permissions.filter(perm => perm.type === 'admin')[0].entity, prismatikId, 'Must have new Admin permission\'s entity id');
     t.end();
   });
 });
