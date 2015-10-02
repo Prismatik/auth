@@ -24,15 +24,26 @@ function createAll(){
    })
 }
 
-function testWrap(description, cb) {
+function testWrap(description, cb, cbWait) {
+  var result;
   test(description, (t) => {
     return dbTestHelper.resetDb()
     .then(() => {
       return createAll();
     })
     .then(() => {
-      cb(t);
-    });
+      return cb(t);
+    })
+    .then((res) => {
+      // result = res;
+      if (cbWait) return cbWait(t, res);
+    })
+  // if (cbWait) {
+    // test('', (t) => {
+      // cbWait(t, result);
+    // });
+  // }
+
   });
 }
 
@@ -64,17 +75,17 @@ testWrap('db.create must create new entities when an array of objects is passed'
 });
 
 testWrap('db.get must retrieve entity matching the ID', (t) => {
-  return db.get('entities', entityId, 'id').then(res => {
+  return db.get('entities', entityId, 'id')
+  }, (t, res) => {
     t.equal(res.id, entityId, 'Must have matching IDs');
     t.end();
-  });
 });
 
 testWrap('db.get must retrieve entity matching the email', (t) => {
-  return db.get('entities', entity.email, 'email').then(res => {
+  return db.get('entities', entity.email, 'email');
+  }, (t, res) => {
     t.equal(res.email, entity.email, 'Must have matching emails');
     t.end();
-  });
 });
 
 testWrap('db.get must not retrieve entities not matching the permission type and entity', (t) => {
@@ -85,10 +96,10 @@ testWrap('db.get must not retrieve entities not matching the permission type and
 });
 
 testWrap('db.get must retrieve entities matching the permission type and entity', (t) => {
-  return db.get('entities', {type: 'developer', entity: prismatikId}, 'permissions').then(res => {
+  return db.get('entities', {type: 'developer', entity: prismatikId}, 'permissions')
+  }, (t, res) => {
     t.equal(dbTestHelper.filterEntitiesByPermissions(res, {type: 'developer', entity: prismatikId}).length, 1, 'Must have populated array')
     t.end();
-  });
 });
 
 testWrap('db.get must not retrieve entities not matching the permission type', (t) => {
@@ -138,10 +149,9 @@ testWrap('db.update must not save the old version of the entity', (t) => {
 testWrap('db.update must save the new version of the entity', (t) => {
   var updated = {id: entityId, name: 'Super Larry'};
   return db.update('entities', updated)
-    .then(res => {
-      t.equal(res.name, updated.name, 'Must have new name')
-      t.end();
-    })
+  }, (t, res) => {
+    t.equal(res.name, 'Super Larry', 'Must have new name')
+    t.end();
 });
 
 testWrap('db.delete must not keep old entity in db', (t) => {
@@ -184,20 +194,18 @@ testWrap('db.create must add permissions to entity if permissions array does not
 
 testWrap('db.create must not clear old permissions from the permissions array', (t) => {
   return db.create('entities', {type: 'UX Designer', entity: prismatikId}, entityId, 'permissions')
-    .then(res => {
-      t.deepEqual(res.permissions.filter(perm => perm.type === 'tester')[0].type, 'tester', 'Must still have tester permission');
-      t.deepEqual(res.permissions.filter(perm => perm.type === 'developer')[0].type, 'developer', 'Must still have developer permission');
-      t.end();
-    });
+  }, (t, res) => {
+    t.deepEqual(res.permissions.filter(perm => perm.type === 'tester')[0].type, 'tester', 'Must still have tester permission');
+    t.deepEqual(res.permissions.filter(perm => perm.type === 'developer')[0].type, 'developer', 'Must still have developer permission');
+    t.end();
 });
 
 testWrap('db.create must add new permission to the permissions array', (t) => {
-  return db.create('entities', {type: 'admin', entity: prismatikId}, entityId, 'permissions')
-  .then(res => {
-    t.deepEqual(res.permissions.filter(perm => perm.type === 'admin')[0].type, 'admin', 'Must have new Admin permission\'s type');
+  return db.create('entities', {type: 'admin', entity: prismatikId}, entityId, 'permissions');
+  }, (t, res) => {
     t.deepEqual(res.permissions.filter(perm => perm.type === 'admin')[0].entity, prismatikId, 'Must have new Admin permission\'s entity id');
+    t.deepEqual(res.permissions.filter(perm => perm.type === 'admin')[0].type, 'admin', 'Must have new Admin permission\'s type');
     t.end();
-  });
 });
 
 testWrap('db.create must add new permission to the inherited permissions array', (t) => {
