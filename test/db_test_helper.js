@@ -9,7 +9,11 @@ exports.resetDb = () => {
 };
 
 exports.close = () => {
-  return r._poolMaster.drain();
+  return new Promise((resolve,reject) => resolve(r._poolMaster.drain()) );
+};
+
+exports.open = () => {
+  return new Promise((resolve,reject) => resolve(r.createPools(r._poolMaster._options)) );
 };
 
 exports.filterEntitiesByPermissions = (entities, permission) => {
