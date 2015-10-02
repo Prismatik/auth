@@ -51,70 +51,70 @@ test('db.create must create new entities when an array of objects is passed', (t
 });
 
 test('db.get must retrieve entity matching the ID', (t) => {
-  db.get(entityId, 'entities', 'id').then(res => {
+  db.get('entities', entityId, 'id').then(res => {
     t.equal(res.id, entityId, 'Must have matching IDs');
     t.end();
   });
 });
 
 test('db.get must retrieve entity matching the email', (t) => {
-  db.get(entity.email, 'entities', 'email').then(res => {
+  db.get('entities', entity.email, 'email').then(res => {
     t.equal(res.email, entity.email, 'Must have matching emails');
     t.end();
   });
 });
 
 test('db.get must not retrieve entities not matching the permission type and entity', (t) => {
-  db.get({type: 'developer'}, 'entities', 'permissions').then(res => {
+  db.get('entities', {type: 'developer'}, 'permissions').then(res => {
     t.deepEqual(dbTestHelper.filterEntitiesByPermissions(res, {type: 'dog catcher', entity: 'nope'}), [], 'Must have empty array');
     t.end();
   });
 });
 
 test('db.get must retrieve entities matching the permission type and entity', (t) => {
-  db.get({type: 'developer', entity: prismatikId}, 'entities', 'permissions').then(res => {
+  db.get('entities', {type: 'developer', entity: prismatikId}, 'permissions').then(res => {
     t.equal(dbTestHelper.filterEntitiesByPermissions(res, {type: 'developer', entity: prismatikId}).length, 2, 'Must have populated array')
     t.end();
   });
 });
 
 test('db.get must not retrieve entities not matching the permission type', (t) => {
-  db.get({type: 'developer'}, 'entities', 'permissions').then(res => {
+  db.get('entities', {type: 'developer'}, 'permissions').then(res => {
     t.deepEqual(dbTestHelper.filterEntitiesByPermissions(res, {type: 'dog catcher'}), [], 'Must have empty array')
     t.end();
   });
 });
 
 test('db.get must return empty array if there are no entities matching the permission type', (t) => {
-  db.get({type:'Executive Administrator'}, 'entities', 'permissions').then(res => {
+  db.get('entities', {type:'Executive Administrator'}, 'permissions').then(res => {
     t.deepEqual(res, [], 'Must have an empty array');
     t.end();
   });
 });
 
 test('db.get must retrieve entities matching the permission types', (t) => {
-  db.get({type: 'developer'}, 'entities', 'permissions').then(res => {
+  db.get('entities', {type: 'developer'}, 'permissions').then(res => {
     t.equal(dbTestHelper.filterEntitiesByPermissions(res, {type: 'developer'}).length, res.length, 'Must have an array with permissions only matching permission types');
     t.end();
   });
 });
 
 test('db.get must return empty array if there are no entities matching the permission entities', (t) => {
-  db.get({entity:'nope'}, 'entities', 'permissions').then(res => {
+  db.get('entities', {entity:'nope'}, 'permissions').then(res => {
     t.deepEqual(res, [], 'Must have an empty array');
     t.end();
   });
 });
 
 test('db.get must retrieve entities matching the permission entities', (t) => {
-  db.get({entity: prismatikId}, 'entities', 'permissions').then(res => {
+  db.get('entities', {entity: prismatikId}, 'permissions').then(res => {
     t.equal(res.length, 3, 'Must have an array with permission matching permission entities');
     t.end();
   });
 });
 
 test('db.update must not save the old version of the entity', (t) => {
-  var updated = {id: entityId, name: 'Old Larry'}
+  var updated = {id: entityId, name: 'Old Larry'};
   db.update('entities', updated)
     .then(res => {
       t.notEqual(res.name, 'Larry', 'Must not have old name')
@@ -123,7 +123,7 @@ test('db.update must not save the old version of the entity', (t) => {
 });
 
 test('db.update must save the new version of the entity', (t) => {
-  var updated = {id: entityId, name: 'Super Larry'}
+  var updated = {id: entityId, name: 'Super Larry'};
   db.update('entities', updated)
     .then(res => {
       t.equal(res.name, updated.name, 'Must have new name')
@@ -137,7 +137,7 @@ test('db.delete must not keep old entity in db', (t) => {
       return db.delete('entities', res.id);
     })
     .then(res => {
-      return db.get('Parry', 'entities', 'name');
+      return db.get('entities', 'Parry', 'name');
     })
     .then(res => {
       t.deepEqual(res, [], 'Must not include old entity');
