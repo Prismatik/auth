@@ -8,6 +8,10 @@ exports.resetDb = () => {
     .run();
 };
 
+exports.close = () => {
+  return r._poolMaster.drain();
+};
+
 exports.filterEntitiesByPermissions = (entities, permission) => {
   return _.filter(entities, function(entity) {
     return _.any(entity.permissions, function(perm) {

@@ -216,3 +216,8 @@ test('db.delete must not keep old permission in inherited_permissions array', (t
     t.end();
   });
 });
+
+test('end', (t) => {
+  dbTestHelper.close();
+  t.end();
+});
