@@ -9,6 +9,13 @@ To kickstart the service run `npm start`.
 Tests use [Tape](https://github.com/substack/tape) test harness. To run tests
 use `npm test`.
 
+## RethinkDB
+To install rethinkDB, run the following:
+`brew update && brew install rethinkdb`
+To start the RethinkDB Server, run `rethinkdb`.
+You can check out the GUI at `http://localhost:8080`.
+This window needs to stay open, or the connection will close.
+
 ## Schemas
 
 ### Generating docs

@@ -2,6 +2,9 @@
   "env": [
     {"var": "NODE_ENV", "default": "development"},
     {"var": "PORT", "default": 3000},
-    {"var": "JWT_SECRET", "default": "wToWfmQAFcK7n6eDbSsEyKq7"}
+    {"var": "JWT_SECRET", "default": "wToWfmQAFcK7n6eDbSsEyKq7"},
+    {"var": "RETHINK_HOST", "default": "localhost"},
+    {"var": "RETHINK_PORT", "default": 28015},
+    {"var": "RETHINK_NAME", "default": "auth"}
   ]
 }
