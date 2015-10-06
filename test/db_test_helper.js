@@ -8,6 +8,14 @@ exports.resetDb = () => {
     .run();
 };
 
+exports.close = () => {
+  return new Promise((resolve,reject) => resolve(r._poolMaster.drain()) );
+};
+
+exports.open = () => {
+  return new Promise((resolve,reject) => resolve(r.createPools(r._poolMaster._options)) );
+};
+
 exports.filterEntitiesByPermissions = (entities, permission) => {
   return _.filter(entities, function(entity) {
     return _.any(entity.permissions, function(perm) {
