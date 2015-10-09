@@ -10,10 +10,11 @@ module.exports = function(req, res, next) {
   jsonSchema.validate(schema, props, req.body)
     .then(next)
     .catch((e) => {
-      res.send(400, formatErrors(e.fields));
+      res.send(400, formatErrors(e.fields)); // FIXME e.fields never seems to exist
     });
 };
 
 function formatErrors(errors) {
+  if (!errors) return 'Unexplained validation error';
   return errors.map(e => format(ERROR_MSG, e.path, e.keyword));
 }
