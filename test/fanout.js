@@ -1,112 +1,256 @@
-var _ = require('lodash');
-var proxyquire = require('proxyquire');
-var test = require('./tape');
-var entities = require('./fixtures/entities.json');
+const _ = require('lodash');
+const test = require('./tape');
+const entities = require('./fixtures/entities.json');
+const r = require('root/lib/r');
+const fanout = require('root/lib/fanout');
 
-var fanout = proxyquire('root/lib/fanout', {
-  'root/models/entity': {
-    get: (id) => {
-      return Promise.resolve().then(() => _.find(entities, {id: id}));
-    }
-  }
-});
+function setup() {
+  return r.tableList().contains('entities').run()
+  .then(hasTable => hasTable ? r.tableDrop('entities').run() : null)
+  .then(() => r.tableCreate('entities').run())
+  .then(() => r.table('entities').insert(_.times(5, () => ({
+    permissions: [],
+    inherited_permissions: []
+  })), { returnChanges: true }).run())
+  .then(res => _.pluck(res.changes, 'new_val'))
+}
 
-const id = '015f04df-af79-450c-9c10-08bafc9a1da3';
-const operation = {
-  action: 'add',
-  variety: 'permission',
-  type: 'member',
-  entity: '7aeaafb2-d194-449c-8fa7-2cc54873ffea',
-};
+function genPermission(type, item) {
+  return {
+    type: type,
+    entity: item.id
+  };
+}
 
-test('fanout.generate returns error if input incorrect format', (t) => {
-  fanout.generate(id, 'nope').catch(e => {
-    t.ok(e, 'error if incorrect format');
+function addPermission(to, type, item) {
+  const permission = genPermission(type, item);
+
+  return r.table('entities').get(to.id).update(entity => ({
+    permissions: entity('permissions').append(permission)
+  })).run();
+}
+
+function addInherited(to, type, item) {
+  const permission = genPermission(type, item);
+
+  return r.table('entities').get(to.id).update(entity => ({
+    inherited_permissions: entity('inherited_permissions').append(permission)
+  })).run();
+}
+
+test('fanout.resolvePermissions resolves if passed no changed permissions', t => {
+  fanout.resolvePermissions().then(() => {
+    t.pass('fanout.resolvePermissions resolves');
     t.end();
   });
 });
 
-test('fanout.generate returns error if input incorrect format', (t) => {
-  fanout.generate(id, 'nope').catch(e => {
-    t.ok(e, 'error if incorrect format');
-    t.end();
+test('fanout.resolvePermissions adds the correct permissions from down the tree', t => {
+  setup().then(entities => {
+    addPermission(entities[1], 'owner', entities[2])
+    .then(() => {
+      const permissions = [genPermission('owner', entities[1])];
+
+      return fanout.resolvePermissions(entities[0].id, permissions);
+    })
+    .then(() => r.table('entities').get(entities[0].id).run()
+      .then(entity => {
+        const expectedPermission = {
+          entity: entities[2].id,
+          type: 'owner'
+        };
+
+        t.ok(_.some(entity.inherited_permissions, expectedPermission), 'inherited_permissions includes expectedPermission');
+        t.end();
+      }));
   });
 });
 
-test('fanout.generate returns error if input missing variety', (t) => {
-  var input = _.assign({}, operation, {variety: null});
-  fanout.generate(id, _.pick(input, _.identity)).catch(e => {
-    t.ok(e, 'error if variety missing');
-    t.end();
+test('fanout.resolvePermissions does not duplicate permissions', t => {
+  setup().then(entities => {
+    Promise.all([
+      addPermission(entities[1], 'owner', entities[3]),
+      addPermission(entities[2], 'owner', entities[3])
+    ])
+    .then(() => {
+      const permissions = [
+        genPermission('owner', entities[1]),
+        genPermission('owner', entities[2])
+      ];
+
+      return fanout.resolvePermissions(entities[0].id, permissions)
+    })
+    .then(() => r.table('entities').get(entities[0].id).run()
+      .then(entity => {
+        const expectedPermission = {
+          entity: entities[3].id,
+          type: 'owner'
+        };
+
+        t.ok(_.some(entity.inherited_permissions, expectedPermission), 'inherited_permissions includes expectedPermission');
+        t.equal(entity.inherited_permissions.length, 1, 'inherited_permissions is length 1')
+        t.end();
+      }));
   });
 });
 
-test('fanout.generate returns error if variety incorrect value', (t) => {
-  fanout.generate(id, _.assign({}, operation, {variety: 'nope'})).catch(e => {
-    t.ok(e, 'error if variety is incorrect value');
-    t.end();
+test('fanout.resolvePermissions adds the correct inherited_permissions from down the tree', t => {
+  setup().then(entities => {
+    addInherited(entities[1], 'owner', entities[2])
+    .then(() => {
+      const permissions = [genPermission('owner', entities[1])];
+      return fanout.resolvePermissions(entities[0].id, permissions)
+    })
+    .then(() => r.table('entities').get(entities[0].id).run()
+      .then(entity => {
+        const expectedPermission = {
+          entity: entities[2].id,
+          type: 'owner'
+        };
+
+        t.ok(_.some(entity.inherited_permissions, expectedPermission), 'inherited_permissions includes expectedPermission');
+        t.end();
+      }));
   });
 });
 
-test('fanout.generate returns error if input missing entity', (t) => {
-  var input = _.assign({}, operation, {entity: null});
-  fanout.generate(id, _.pick(input, _.identity)).catch(e => {
-    t.ok(e, 'error if entity missing');
-    t.end();
+test('fanout.resolvePermissions does not duplicate inherited_permissions', t => {
+  setup().then(entities => {
+    addInherited(entities[1], 'owner', entities[3])
+    .then(() => addInherited(entities[2], 'owner', entities[3]))
+    .then(() => {
+      const permissions = [
+        genPermission('owner', entities[1]),
+        genPermission('owner', entities[2])
+      ];
+
+      return fanout.resolvePermissions(entities[0].id, permissions)
+    })
+    .then(() => r.table('entities').get(entities[0].id).run()
+      .then(entity => {
+        const expectedPermission = {
+          entity: entities[3].id,
+          type: 'owner'
+        };
+
+        t.ok(_.some(entity.inherited_permissions, expectedPermission), 'inherited_permissions includes expectedPermission');
+        t.equal(entity.inherited_permissions.length, 1, 'inherited_permissions is length 1')
+        t.end();
+      }));
   });
 });
 
-test('fanout.generate returns error if entity incorrect value', (t) => {
-  fanout.generate(id, _.assign({}, operation, {entity: '123'})).catch(e => {
-    t.equal(e, 'entity must be a valid UUID', 'error if incorrect value');
-    t.end();
+test('fanout.resolvePermissions does not duplicate inherited_permissions that match permissions', t => {
+  setup().then(entities => {
+    addPermission(entities[1], 'owner', entities[3])
+    .then(() => addInherited(entities[2], 'owner', entities[3]))
+    .then(() => {
+      const permissions = [
+        genPermission('owner', entities[1]),
+        genPermission('owner', entities[2]),
+      ];
+
+      return fanout.resolvePermissions(entities[0].id, permissions)
+    })
+    .then(() => r.table('entities').get(entities[0].id).run()
+      .then(entity => {
+        const expectedPermission = {
+          entity: entities[3].id,
+          type: 'owner'
+        };
+
+        t.ok(_.some(entity.inherited_permissions, expectedPermission), 'inherited_permissions includes expectedPermission');
+        t.equal(entity.inherited_permissions.length, 1, 'inherited_permissions is length 1')
+        t.end();
+      }));
   });
 });
 
-test('fanout.generate returns error if input missing data', (t) => {
-  var input = _.assign({}, operation, {type: null});
-  fanout.generate(id, _.pick(input, _.identity)).catch(e => {
-    t.ok(e, 'error if type missing');
-    t.end();
+test('fanout.resolvePermissions adds the correct inherited_permissions up the tree', t => {
+  setup().then(entities => {
+    addPermission(entities[0], 'owner', entities[1])
+    .then(() => addPermission(entities[2], 'owner', entities[3]))
+    .then(() => {
+      const permissions = [
+        genPermission('owner', entities[2])
+      ];
+
+      return fanout.resolvePermissions(entities[1].id, permissions);
+    })
+    .then(() => r.table('entities').get(entities[0].id).run()
+      .then(entity => {
+        const expectedPermission = {
+          entity: entities[3].id,
+          type: 'owner'
+        };
+
+        t.ok(_.some(entity.inherited_permissions, expectedPermission), 'inherited_permissions includes expectedPermission');
+        t.end();
+      }));
   });
 });
 
-test('fanout.generate returns only passed operation if entity has no permissions', (t) => {
-  var input = _.assign({}, operation, {entity: '62bb01a7-7af2-467b-935d-fed7953d3a17'});
-  fanout.generate(id, input).then(res => {
-    t.equal(res.operations.length, 1, 'only one operation returned');
-    t.end();
+test('fanout.resolvePermissions adds multiple inherited_permissions up the tree', t => {
+  setup().then(entities => {
+    addPermission(entities[0], 'owner', entities[1])
+    .then(() => {
+      const permissions = [
+        genPermission('owner', entities[2]),
+        genPermission('owner', entities[3])
+      ];
+
+      return fanout.resolvePermissions(entities[1].id, permissions);
+    })
+    .then(() => r.table('entities').get(entities[0].id).run()
+      .then(entity => {
+        t.equal(entity.inherited_permissions.length, 2, 'inherited_permissions is length 2')
+        t.end();
+      }));
   });
 });
 
-test('fanout.generate does not return inherited permissions of another type', (t) => {
-  fanout.generate(id, operation).then(res => {
-    t.equal(res.operations.length, 2, 'returns two operations');
+test('fanout.resolvePermissions does not duplicate inherited_permissions up the tree', t => {
+  setup().then(entities => {
+    Promise.all([
+      addPermission(entities[0], 'owner', entities[1]),
+      addPermission(entities[2], 'owner', entities[4]),
+      addPermission(entities[3], 'owner', entities[4])
+    ])
+    .then(() => {
+      const permissions = [
+        genPermission('owner', entities[2]),
+        genPermission('owner', entities[3]),
+      ];
 
-    var found = res.operations.filter(item => {
-      return item.type != operation.type;
+      return fanout.resolvePermissions(entities[1].id, permissions);
+    })
+    .then(() => r.table('entities').get(entities[0].id).run()
+      .then(entity => {
+        const expectedPermission = {
+          entity: entities[4].id,
+          type: 'owner'
+        };
+
+        t.ok(_.some(entity.inherited_permissions, expectedPermission), 'inherited_permissions includes expectedPermission');
+        t.equal(entity.inherited_permissions.length, 3, 'inherited_permissions is length 3')
+        t.end();
+      }));
+  });
+});
+
+test('fanout.resolvePermissions rejects with an error on circular inheritance', t => {
+  setup().then(entities => {
+    addPermission(entities[0], 'owner', entities[1])
+    .then(() => {
+      const permissions = [
+        genPermission('owner', entities[0])
+      ];
+
+      return fanout.resolvePermissions(entities[1].id, permissions)
+    })
+    .catch(e => {
+      t.equal(e.message, 'Circular inheritance found. type: owner, parent: ' + entities[0].id)
+      t.end();
     });
-    t.notOk(found.length, 'found 0 incorrect types of permissions');
-    t.end();
-  });
-});
-
-test('fanout.generate returns inherited permission of operation.type', (t) => {
-  fanout.generate(id, operation).then(res => {
-    t.equal(res.operations.length, 2, 'returns two operations');
-
-    var found = res.operations.filter(item => {
-      return item.variety == 'inherited_permission';
-    });
-    t.ok(found.length, 'found inherited permission');
-    t.end();
-  });
-});
-
-test('fanout.generate returns error if circular inheritance found', (t) => {
-  var input = _.assign({}, operation, {type: 'owner'});
-  fanout.generate(id, input).catch(e => {
-    t.ok(e, 'display circular inheritance error');
-    t.end();
-  });
+  })
 });
