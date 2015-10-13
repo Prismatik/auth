@@ -84,27 +84,3 @@ exports.update = function(req, res, next) {
   })
   .catch(next);
 };
-
-exports.delete = function(req, res, next) {
-  return entity.delete(req.params.id)
-  .then(doc => {
-    res.send(doc);
-  })
-  .catch(next);
-};
-
-exports.updatePermissions = function(req, res, next) {
-  if (req.body.action === 'add') {
-    return entity.createPermission(req.params.id, req.body)
-    .then(doc => {
-      res.send(doc);
-    })
-    .catch(next);
-  } else if (req.body.action === 'remove') {
-    return entity.deletePermission(req.params.id)
-    .then(doc => {
-      res.send(doc);
-    })
-    .catch(next);
-  }
-};
