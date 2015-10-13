@@ -2,6 +2,7 @@
 const restify = require('restify');
 const jwt = require('jsonwebtoken');
 const r = require('root/lib/r');
+const _ = require('lodash');
 
 exports.route = function(server) {
   server.post('/login', exports.login);
@@ -29,7 +30,11 @@ exports.login = (req, res, next) => {
       throw new restify.ForbiddenError('Invalid username, email or password');
     }
 
-    const token = jwt.sign({email: entity.email, id: entity.id}, process.env.JWT_SECRET);
+    const email = _.contains(entity.emails, req.body.email) ?
+      req.body.email
+      : entity.emails[0];
+
+    const token = jwt.sign({email: email}, process.env.JWT_SECRET);
     res.send({token: token});
     return next();
   })

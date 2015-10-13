@@ -47,12 +47,14 @@ exports.read = function(req, res, next) {
 exports.getAll = function(req, res, next) {
   if (req.query.token) {
     return Entity.decodeToken(req.query.token)
-    .then(decoded => r.table('entities').get(decoded.id).run())
-    .then(entity => {
-      res.send([entity])
+    .then(decoded =>
+      r.table('entities').filter(entity =>
+        entity('emails').contains(decoded.email)).run())
+    .then(entities => {
+      res.send(entities)
       return next();
     })
-    .catch(() => next(new restify.ForbiddenError('Invalid Token')))
+    .catch((e) => next(new restify.ForbiddenError('Invalid Token')))
   }
 
   Entity.buildQuery(req.query, req.params).run()
