@@ -5,13 +5,10 @@ const r = require('root/lib/r');
 const fanout = require('root/lib/fanout');
 
 function setup() {
-  return r.tableList().contains('entities').run()
-  .then(hasTable => hasTable ? r.tableDrop('entities').run() : null)
-  .then(() => r.tableCreate('entities').run())
-  .then(() => r.table('entities').insert(_.times(5, () => ({
+  return r.table('entities').insert(_.times(5, () => ({
     permissions: [],
     inherited_permissions: []
-  })), { returnChanges: true }).run())
+  })), { returnChanges: true }).run()
   .then(res => _.pluck(res.changes, 'new_val'));
 }
 
@@ -37,6 +34,13 @@ function addInherited(to, type, item) {
     inherited_permissions: entity('inherited_permissions').append(permission)
   })).run();
 }
+
+test('setup table', t => {
+  r.tableList().contains('entities').run()
+  .then(hasTable => hasTable ? r.tableDrop('entities').run() : null)
+  .then(() => r.tableCreate('entities').run())
+  .then(() => t.end())
+});
 
 test('fanout.resolvePermissions resolves if passed no changed permissions', t => {
   fanout.resolvePermissions().then(() => {

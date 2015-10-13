@@ -1,67 +1,53 @@
 var jwt = require('jsonwebtoken');
 var _ = require('lodash');
-var request = require('request-promise');
+var request = require('supertest');
 var server = require('root/lib/server');
 var test = require('./tape');
 
-const path = 'http://localhost:' + process.env.PORT;
-const opts = {
-  url: path + '/verify-token',
-  method: 'POST'
+const key = process.env.API_KEY;
+const pass = (t, message) => (error) => {
+  if (error) return t.end(error);
+  t.pass(message);
+  t.end();
 };
 
-function ignite(description, cb) {
-  test(description, (t) => {
-    server.start().then(serv => {
-      cb(t).then(() => server.end());
-    });
-  });
-}
-
-ignite('verifying token must respond 404 Not Found if token missing', (t) => {
-  return request(_.assign(opts, {json: {}}))
-    .catch(e => {
-      t.equal(e.statusCode, 404, 'HTTP status code is correct');
-      t.equal(e.error, 'Missing token.', 'respond missing token error');
-      t.end();
-    });
+test('verifying token must respond 404 Not Found if token missing', (t) => {
+  request(server)
+  .post('/verify-token')
+  .auth('test', key)
+  .send({})
+  .expect(404, {code: 'NotFoundError', message: 'Missing token.'}, pass(t, 'returned 404 not fond'))
 });
 
-ignite('verifying token must respond 400 Bad Request if token invalid signature', (t) => {
+test('verifying token must respond 400 Bad Request if token invalid signature', (t) => {
   var token = jwt.sign({}, 'nope');
 
-  return request(_.assign(opts, {json: {token: token}}))
-    .catch(e => {
-      t.equal(e.statusCode, 400, 'HTTP status code is correct');
-      t.equal(e.error, 'invalid signature', 'respond invalid signature error');
-      t.end();
-    });
+  request(server)
+  .post('/verify-token')
+  .auth('test', key)
+  .send({token: token})
+  .expect(400, {code: 'BadRequestError', message: 'invalid signature'}, pass(t, 'respond invalid signature error'));
 });
 
-ignite('verifying token must respond 400 Bad Request if token expired', (t) => {
-  var attr = {expiresInSeconds: 1};
+test('verifying token must respond 400 Bad Request if token expired', (t) => {
+  var attr = {expiresIn: 1};
   var token = jwt.sign({}, process.env.JWT_SECRET, attr);
 
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      request(_.assign(opts, {json: {token: token}}))
-        .catch(e => {
-          t.equal(e.statusCode, 400, 'HTTP status code is correct');
-          t.equal(e.error, 'jwt expired', 'respond jwt expired error');
-          t.end();
-          return resolve();
-        });
-    }, 1100);
-  });
+  setTimeout(() => {
+    request(server)
+    .post('/verify-token')
+    .auth('test', key)
+    .send({token: token})
+    .expect(400, {code: 'BadRequestError', message: 'jwt expired'}, pass(t, 'respond jwt expired error'));
+  }, 1100);
 });
 
-ignite('verifying token must respond 404 Not Found if token email does not exist', (t) => {
+test('verifying token must respond 404 Not Found if token email does not exist', (t) => {
   var token = jwt.sign({}, process.env.JWT_SECRET);
 
-  return request(_.assign(opts, {json: {token: token}}))
-    .catch(e => {
-      t.equal(e.statusCode, 404, 'HTTP status code is correct');
-      t.equal(e.error, 'Missing email.', 'respond missing email error');
-      t.end();
-    });
+  request(server)
+  .post('/verify-token')
+  .auth('test', key)
+  .send({token: token})
+  .expect(404, {code: 'NotFoundError', message: 'Missing email.'}, pass(t, 'respond missing email error'));
 });
