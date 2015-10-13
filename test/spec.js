@@ -463,8 +463,6 @@ test('it should understand inheritance of permissions (Alice, Bob, Managers)', f
     var bob = entities[1];
     var managers = entities[2];
 
-    console.log('alice rev', alice.rev)
-
     managers.permissions.push({
       type: 'owner',
       entity: bob.id
