@@ -17,7 +17,7 @@
     "json-schema-random": "0.0.4",
     "json-schema-to-markdown": "^1.0.1",
     "json-schema-validator": "git://github.com/Prismatik/json-schema-validator.git#master",
-    "jsonwebtoken": "^5.0.5",
+    "jsonwebtoken": "^5.4.0",
     "lodash": "^3.10.1",
     "node-uuid": "^1.4.3",
     "promisify-node": "^0.2.1",
