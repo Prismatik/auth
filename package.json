@@ -16,12 +16,13 @@
     "json-schema-deref": "^0.1.9",
     "json-schema-random": "0.0.4",
     "json-schema-to-markdown": "^1.0.1",
+    "json-schema-validator": "git://github.com/Prismatik/json-schema-validator.git#master",
     "jsonwebtoken": "^5.0.5",
+    "lodash": "^3.10.1",
     "promisify-node": "^0.2.1",
     "required_env": "^1.0.0",
     "restify": "^4.0.3",
-    "json-schema-validator": "git://github.com/Prismatik/json-schema-validator.git#master",
-    "lodash": "^3.10.1"
+    "rethinkdbdash": "^2.1.9"
   },
   "devDependencies": {
     "request-promise": "^0.4.3",

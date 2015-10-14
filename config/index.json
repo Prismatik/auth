@@ -3,6 +3,9 @@
     {"var": "NODE_ENV", "default": "development"},
     {"var": "PORT", "default": 3000},
     {"var": "JWT_SECRET", "default": "wToWfmQAFcK7n6eDbSsEyKq7"},
-    {"var": "API_KEY", "default": "hai"}
+    {"var": "API_KEY", "default": "hai"},
+    {"var": "RETHINK_HOST", "default": "127.0.0.1"},
+    {"var": "RETHINK_PORT", "default": "28015"},
+    {"var": "RETHINK_NAME", "default": "auth"}
   ]
 }
