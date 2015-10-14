@@ -1,3 +1,5 @@
+[![Build Status](https://magnum.travis-ci.com/Prismatik/auth.svg?token=rFUGfrjjDVCsE6U1mRc9&branch=master)](https://magnum.travis-ci.com/Prismatik/auth)<F37>
+
 # Auth Service
 A generically useful authentication and authorisation server based on a
 heirarchy-free inter-entity permission system.
