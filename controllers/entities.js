@@ -51,10 +51,17 @@ exports.getAll = function(req, res, next) {
       r.table('entities').filter(entity =>
         entity('emails').contains(decoded.email)).run())
     .then(entities => {
-      res.send(entities)
+      if (!entities || entities.length === 0) {
+        res.send(404);
+      } else {
+        res.send(entities)
+      };
       return next();
     })
-    .catch((e) => next(new restify.ForbiddenError('Invalid Token')))
+    .catch((e) => {
+      if (e.name === 'TokenExpiredError') return next(new restify.UnauthorizedError('Token Expired'));
+      next(new restify.ForbiddenError('Invalid Token'));
+    });
   }
 
   Entity.buildQuery(req.query, req.params).run()

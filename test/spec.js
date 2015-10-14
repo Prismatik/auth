@@ -6,6 +6,7 @@ var request = require('supertest');
 var _ = require('lodash');
 var entities = require('root/test/fixtures/entities');
 var r = require('root/lib/r');
+var jwt = require('jsonwebtoken');
 
 const key = process.env.API_KEY;
 
@@ -167,6 +168,35 @@ test('it should not return any Entity given an invalid token', function(t) {
   .get('/entities?token=foo')
   .auth('test', key)
   .expect(403, pass(t, 'return 403 forbidden'))
+});
+
+test('it should respond 404 for a valid token that contains a non-existent email', (t) => {
+  var token = jwt.sign({email: 'foo@example.com'}, process.env.JWT_SECRET);
+  request(server)
+  .get('/entities?token='+token)
+  .auth('test', key)
+  .expect(404, pass(t, 'return 404 not found'))
+});
+
+test('it should respond 401 Unauthorized if token expired', (t) => {
+  var attr = {expiresIn: 1};
+  var token = jwt.sign({}, process.env.JWT_SECRET, attr);
+
+  setTimeout(() => {
+    request(server)
+    .get('/entities?token='+token)
+    .auth('test', key)
+    .expect(401, pass(t, 'return 401 unauthorized'))
+  }, 1100);
+});
+
+test('it should respond 403 Forbidden if token invalid signature', (t) => {
+  var token = jwt.sign({}, 'nope');
+
+  request(server)
+  .get('/entities?token='+token)
+  .auth('test', key)
+  .expect(403, pass(t, 'return 403 Forbidden'))
 });
 
 test('it should return the Entity associated with a valid email', function(t) {
