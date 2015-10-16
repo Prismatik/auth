@@ -2,345 +2,596 @@ var config = require('root/config');
 require('required_env')(config.env);
 var test = require('./tape');
 var server = require('root/lib/server');
-var request = require('request-promise');
+var request = require('supertest');
+var _ = require('lodash');
 var entities = require('root/test/fixtures/entities');
+var r = require('root/lib/r');
+var jwt = require('jsonwebtoken');
 
-var unauthed = 'http://localhost:'+process.env.PORT;
-var url = 'http://test:'+process.env.API_KEY+'@localhost:'+process.env.PORT;
+const key = process.env.API_KEY;
 
-var fail = function(t) {
+const fail = function(t) {
   return function() {
     t.fail();
     t.end();
   }
 };
 
+const pass = (t, message) => (err) => {
+  if (err) return t.end(err);
+  t.pass(message);
+  t.end();
+}
+
+const rando = () => Math.floor(Math.random() * (1 << 24)).toString(16);
+
+const genEntity = () =>
+  _.assign(_.omit(entities[0], 'id'), { emails: [rando() + '@email.com'] });
+
 // Feel free to split these tests out into files, write additional ones, etc. Change the runner if you like.
 // I've written this spec in the mindset of e2e integration tests. ie: stand up a server and throw queries at it with superagent or request or similar. We should also write unit tests for the actual code as we go.
 
 // Note that I haven't given a great deal of thought to PUT vs POST in these tests, so if it makes sense to substitute, test both, etc, just do it.
 //
-test('stand up the server', function(t) {
-  server.start().then(function(instance) {
-    t.end();
-  }).catch(function() {
-    t.fail();
-  });
+test('it should return 401 to a request with no auth', function(t) {
+  request(server)
+  .post('/entities')
+  .expect(401, pass(t, 'returned 401'))
 });
 
-test('it should return 403 to a request with no auth', function(t) {
-  request(unauthed)
-  .catch(function(err) {
-    t.equal(err.statusCode, 401);
-    t.end();
-  });
-});
-
-test('it should not allow an authorised request to POST an Entity resource', function(t) {
-  request.post(url+'/entities').json(entities[0]).then(function(res, body) {
-    t.equal(res.statusCode, 200);
-    t.end();
-  })
-  .catch(fail(t));
-  // Probably just use something like miniauth (https://www.npmjs.com/package/miniauth) for now. The inital use case for this is just something that API services can access. We don't need to worry about end users talking to it directly as yet, though that would be good in the future.
+test('it should allow an authorised request to POST an Entity resource', function(t) {
+  request(server).post('/entities')
+  .send(genEntity())
+  .auth('test', key)
+  .expect(200, pass(t, 'returned 200'));
 });
 
 test('it should allow an authorised request to GET an Entity resource after POSTing it', function(t) {
-  var entity = entities[0];
-  request.post(url+'/entities').json(entity).then(function(res, body) {
-    t.equal(res.statusCode, 200);
-  }).then(function() {
-    return request.get(url+'/entities/'+entity.id);
-  }).then(function(res, body) {
-    t.equal(res.statusCode, 200);
-    t.deepEqual(body, entity);
-    t.end();
-  })
-  .catch(fail(t));
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .expect(200)
+  .end((err, res) => {
+    request(server)
+    .get('/entities/' + res.body.id)
+    .auth('test', key)
+    .expect(res => {
+      res.body.rev = entity.rev
+      res.body.created_at = entity.created_at
+      res.body.updated_at = entity.updated_at
+    })
+    .expect(200, _.assign({}, entity, {id: res.body.id}), pass(t, 'returned correct entity'));
+  });
 });
 
-test('it should reject the POST of a malformed Entity resource', function(t) {
-  request.post(url+'/entities').json({hai: 'foo'})
-  .catch(function(err) {
-    t.equal(err.statusCode, 400);
-    t.end();
-  });
+test.skip('it should reject the POST of a malformed Entity resource', function(t) {
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send({hai: 'foo'})
+  .expect(400, pass(t, 'return 400 error'));
 });
 
 test('it should enforce that emails are unique', function(t) {
-  var one = {
-    emails: 'sample@example.com',
-  };
-  request.post(url+'/entities').json(one)
-  .then(function(res) {
-    t.equal(res.statusCode, 200);
-  })
-  .then(function() {
-    return request.post(url+'/entities').json(sample)
-  })
-  .catch(function(err) {
-    t.equal(err.statusCode, 409);
-    t.end();
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .expect(200)
+  .end(() => {
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(entity)
+    .expect(409, pass(t, 'returned 409 error'));
   });
 });
 
-test.skip('it should create a token given the correct password for a UID', function(t) {
+test('it should create a token given the correct password for a UID', function(t) {
   // Set up an entity, then POST to /login with the entity's UID and password. It should return a token
+  populateEntities(1)
+  .then(entities => {
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      id: entities[0].id,
+      password: entities[0].password
+    })
+    .expect(res => {
+      t.ok(res.body.token, 'returned a token')
+    })
+    .expect(200, pass(t, 'returned 200'));
+  });
 });
 
-test.skip('it should create a token given the correct password and an email', function(t) {
+test('it should create a token given the correct password and an email', function(t) {
   // Set up an entity, then POST to /login with the entity's email and password. It should return a token
+  populateEntities(1)
+  .then(entities => {
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      email: entities[0].emails[0],
+      password: entities[0].password
+    })
+    .expect(res => {
+      t.ok(res.body.token, 'returned a token')
+    })
+    .expect(200, pass(t, 'returned 200'));
+  });
 });
 
 test('it should not create a token given the incorrect password', function(t) {
-  var req = {
-    emails: ['incorpass@example.com'],
-    password: 'somebcrypthash'
-  };
-  request.post(url+'/entities').json(req)
-  .then(function(res, body) {
-    return request.post(url+'/token').json({
-      id: body.id,
+  populateEntities(1)
+  .then(entities => {
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      id: entities[0].id,
       password: 'wrong'
-    });
-  }).catch(function(err) {
-    t.equal(err.statusCode, 403);
-    t.end();
+    })
+    .expect(403, { code: 'ForbiddenError', message: 'Invalid username, email or password' }, pass(t, 'returned 403 invalid username, email or password error'));
   });
 });
 
-test.skip('it should return the Entity associated with a valid token', function(t) {
+test('it should return the Entity associated with a valid token', function(t) {
   // GET /entities?token=some_jwt should return the Entity you expect it to. To stay RESTful this should be an array that only ever has one element.
+  populateEntities(1)
+  .then(entities => {
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      id: entities[0].id,
+      password: entities[0].password
+    })
+    .end((err, res) => {
+      request(server)
+      .get('/entities?token=' + res.body.token)
+      .auth('test', key)
+      .expect(200, [entities[0]], pass(t, 'returned the entity associated with a valid token'));
+    });
+  });
+
 });
 
 test('it should not return any Entity given an invalid token', function(t) {
-  request.get(url+'/entities?token=foo')
-  .catch(function(err) {
-    t.equal(err.statusCode, 403);
-    t.end();
-  });
+  request(server)
+  .get('/entities?token=foo')
+  .auth('test', key)
+  .expect(403, pass(t, 'return 403 forbidden'))
+});
+
+test('it should respond 404 for a valid token that contains a non-existent email', (t) => {
+  var token = jwt.sign({email: 'foo@example.com'}, process.env.JWT_SECRET);
+  request(server)
+  .get('/entities?token='+token)
+  .auth('test', key)
+  .expect(404, pass(t, 'return 404 not found'))
+});
+
+test('it should respond 401 Unauthorized if token expired', (t) => {
+  var attr = {expiresIn: 1};
+  var token = jwt.sign({}, process.env.JWT_SECRET, attr);
+
+  setTimeout(() => {
+    request(server)
+    .get('/entities?token='+token)
+    .auth('test', key)
+    .expect(401, pass(t, 'return 401 unauthorized'))
+  }, 1100);
+});
+
+test('it should respond 403 Forbidden if token invalid signature', (t) => {
+  var token = jwt.sign({}, 'nope');
+
+  request(server)
+  .get('/entities?token='+token)
+  .auth('test', key)
+  .expect(403, pass(t, 'return 403 Forbidden'))
 });
 
 test('it should return the Entity associated with a valid email', function(t) {
-  var req = {
-    emails: ['validemail@example.com']
-  }
-  request.post(url+'/entities').json(req)
-  .then(function(res, body) {
-    t.equal(res.statusCode, 200);
-    t.deepEqual(body.emails, req.emails);
-    return request.get(url+'/entities?email=validemail%40example.com')
-  })
-  .then(function(res, body) {
-    t.equal(res.statusCode, 200);
-    t.deepEqual(body[0].emails, req.emails);
-    t.end();
-  })
-  .catch(fail(t));
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .expect(200)
+  .end((err, res) => {
+    request(server)
+    .get('/entities?email=' + entity.emails[0])
+    .auth('test', key)
+    .expect(res => {
+      res.body[0].rev = entity.rev
+      res.body[0].created_at = entity.created_at
+      res.body[0].updated_at = entity.updated_at
+    })
+    .expect(200, [_.assign({}, entity, {id: res.body.id})], pass(t, 'returned correct entity'));
+  });
 });
 
 test('it should not return any Entity given an invalid email', function(t) {
-  request.get(url+'/entities?email=foobarbaz%40example.com')
-  .then(function(res, body) {
-    t.equal(res.statusCode, 200);
-    t.equal(body.length, 0);
-    t.end();
-  })
-  .catch(fail(t));
+  request(server)
+  .get('/entities?email=foobarbaz%40example.com')
+  .auth('test', key)
+  .expect(200, [], pass(t, 'returned 0 entities'));
 });
 
 test('it should return the Entity associated with a valid ID', function(t) {
   // GET /entities/some_uuid should return the Entity you expect it to
-  var req = {
-    emails: ['validID@example.com']
-  }
-  request.post(url+'/entities').json(req)
-  .then(function(res, body) {
-    t.equal(res.statusCode, 200);
-    t.deepEqual(body.emails, req.emails);
-    return request.get(url+'/entities/'+body.id)
-  })
-  .then(function(res, body) {
-    t.equal(res.statusCode, 200);
-    t.deepEqual(body[0].emails, req.emails);
-    t.end();
-  })
-  .catch(fail(t));
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .expect(200)
+  .end((err, res) => {
+    request(server)
+    .get('/entities/' + res.body.id)
+    .auth('test', key)
+    .expect(res => {
+      res.body.rev = entity.rev
+      res.body.created_at = entity.created_at
+      res.body.updated_at = entity.updated_at
+    })
+    .expect(200, _.assign({}, entity, { id: res.body.id }), pass(t, 'returned correct entity'))
+  });
 });
 
 test('it should not return any Entity given an invalid ID', function(t) {
-  request.get(url+'/entities/asdasdasfas')
-  .catch(function(err) {
-    t.equal(err.statusCode, 404);
-    t.end();
-  });
+  request(server)
+  .get('/entities/asdasdasfas')
+  .auth('test', key)
+  .expect(404, pass(t, 'returned 404 not found'));
 });
 
 test('it should return all Entities with a given permission', function(t) {
   // GET /entities?perm.type=membership&perm.entity=some_uuid should return an Array of the Entities you expect it to
-  var one = {
-    emails: ['permsone@example.com'],
-    permissions: [
-      {
-        type: 'bar',
-        entity: 'foo'
-      }
-    ]
-  };
-  var two = {
-    emails: ['permstwo@example.com'],
-    permissions: [
-      {
-        type: 'bar',
-        entity: 'foo'
-      }
-    ]
-  };
-  request.post(url+'/entities').json(one)
-  .then(function() {
-    return request.post(url+'/entities').json(two)
-  })
-  .then(function(res, body) {
-    return request.get(url+'/entities?perm.type=bar&perm.entity=foo')
-  })
-  .then(function(res, body) {
-    t.plan(4);
-    t.equal(res.statusCode, 200);
-    t.equal(body.length, 2);
-    body.forEach(function(elem) {
-      if (elem.emails[0] === 'persone@example.com') t.ok();
-      if (elem.emails[0] === 'perstwo@example.com') t.ok();
+  const one = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(one)
+  .end((err, oneRes) => {
+    const onePerms = {
+      type: 'bar',
+      entity: oneRes.body.id
+    };
+
+    var two = genEntity();
+    two.permissions = [onePerms];
+
+    var three = genEntity();
+    three.permissions = [onePerms];
+
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(two)
+    .end((err, twoRes) => {
+      request(server)
+      .post('/entities')
+      .auth('test', key)
+      .send(three)
+      .end((err, threeRes) => {
+        request(server)
+        .get('/entities?perm.type=bar&perm.entity=' + oneRes.body.id)
+        .auth('test', key)
+        .expect(res => {
+          res.body[0].rev = three.rev
+          res.body[0].created_at = three.created_at
+          res.body[0].updated_at = three.updated_at
+          res.body[1].rev = two.rev
+          res.body[1].created_at = two.created_at
+          res.body[1].updated_at = two.updated_at
+        })
+        .expect(200)
+        .end((err, res) => {
+          var passed = pass(t, 'returned correct entities');
+          if (_.some(res.body, _.assign({}, two, {id: twoRes.body.id}))
+          && _.some(res.body, _.assign({}, three, {id: threeRes.body.id}))) {
+            return passed();
+          }
+          return passed('Did not return correct entities');
+        });
+      });
     });
-  })
-  .catch(fail(t));
+  });
 });
 
 test('it should not return any Entity given an invalid permission', function(t) {
-  request.get(url+'/entities?perm.type=baz&perm.entity=foo')
-  .catch(function(err) {
-    t.equal(err.statusCode, 404);
-    t.end();
-  });
+  request(server)
+  .get('/entities?perm.type=baz&perm.entity=foo')
+  .auth('test', key)
+  .expect(200, [], pass(t, 'returned 0 entities'));
 });
 
 test('it should allow composition of filters and paramaters', function(t) {
   // GET /entities/some_uuid?perm.type=membership&perm.entity=some_uuid should return an Entity if the Entity described by that uuid has the requested permission. If they don't have the requested permission it should 404
 
   // GET /entities?perm.type=membership&perm.entity=some_uuid&email=some_email should return an Entity if the Entity described by that email has the requested permission. If they don't have the requested permission it should 404
-  var req = {
-    emails: ['composition@example.com'],
-    permissions: [{
+  const one = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(one)
+  .end((err, oneRes) => {
+    const one = oneRes.body;
+    const onePerms = {
       type: 'composer',
-      entity: 'mozart'
-    }]
-  };
-  request.post(url+'/entities').json(req)
-  .then(function(res, body) {
-    var expect404 = function(err) {
-      if (err.statusCode !== 404) throw err;
-      return Promise.resolve(null, ['dummy']);
+      entity: one.id
     };
-    return Promise.all([
-      request.get(url+'/entities/'+body.id+'?perm.type=composer&perm.entity=mozart'), // 200
-      request.get(url+'/entities/'+body.id+'?perm.type=foo&perm.entity=bar').catch(expect404), // 404
-      request.get(url+'/entities?perm.type=composer&perm.entity=mozart&email=composition%40example.com'), // 200
-      request.get(url+'/entities?perm.type=foo&perm.entity=bar&email=composition%40example.com').catch(expect404), // 404
-    ]);
-  })
-  .then(function(results) {
-    results.forEach(function(res, body) {
-      t.equal(body.length, 1);
+
+    var two = genEntity();
+    two.permissions = [onePerms];
+
+    // NOTE(nickm): Incoming waterfall, I was too deep into supertest to
+    // refactor out by this point.
+
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(two)
+    .expect(res => {
+      res.body.rev = two.rev
+      res.body.created_at = two.created_at
+      res.body.updated_at = two.updated_at
+    })
+    .end((err, twoRes) => {
+      const two = twoRes.body;
+
+      request(server)
+      .get(`/entities/${two.id}?perm.type=composer&perm.entity=${one.id}`)
+      .auth('test', key)
+      .expect(200, two)
+      .end(() => {
+        request(server)
+        .get(`/entities/${two.id}?perm.type=foo&perm.entity=bar`)
+        .auth('test', key)
+        .expect(404)
+        .end(() => {
+          request(server)
+          .get(`/entities?perm.type=composer&perm.entity=${one.id}&email=${two.emails[0]}`)
+          .auth('test', key)
+          .expect(200, [two])
+          .end(() => {
+            request(server)
+            .get(`/entities?perm.type=foo&perm.entity=bar&email=${two.emails[0]}`)
+            .auth('test', key)
+            .expect(200, [], pass(t, 'returned all correct entities'));
+          });
+        });
+      });
     });
-    t.end();
-  })
-  .catch(fail(t));
+  });
 });
 
 test('it should allow an Entity to be updated if the rev property matches the existing representation in the database', function(t) {
-  var req = {
-    emails: ['revtest@example.com'],
-  };
-  request.post(url+'/entities').json(req)
-  .then(function(res, body) {
-    req.rev = body.rev;
-    req.emails.push('revtest2@example.com');
-    return request.post(url+'/entities').json(req);
-  })
-  .then(function(res, body) {
-    t.equal(res.statusCode, 200);
-    t.notEqual(body.rev, req.rev);
-    t.end();
-  })
-  .catch(fail(t));
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    updatedEntity.emails.push(rando() + '@email.com')
+
+    request(server)
+    .put('/entities/' + updatedEntity.id)
+    .auth('test', key)
+    .send(updatedEntity)
+    .expect(res => {
+      res.body.rev = updatedEntity.rev
+      res.body.updated_at = updatedEntity.updated_at
+    })
+    .expect(200, updatedEntity, pass(t, 'returned updated entity'))
+  });
 });
 
 test('it should not allow an Entity to be updated if the rev property does not match the existing representation in the database', function(t) {
-  var req = {
-    emails: ['failrevtest@example.com'],
-  };
-  request.post(url+'/entities').json(req)
-  .then(function(res, body) {
-    req.rev = 'foo';
-    req.emails.push('failrevtest2@example.com');
-    return request.post(url+'/entities').json(req);
-  })
-  .catch(function(err) {
-    t.equal(err.statusCode, 409);
-    t.end();
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    updatedEntity.emails.push(rando() + '@email.com');
+    updatedEntity.rev = 'foo';
+
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(entity)
+    .expect(409, pass(t, 'returned 409'));
   });
 });
 
 test('it should properly set the created_at property of an Entity on creation', function(t) {
-  var req = {
-    emails: ['created@example.com'],
-  };
-  request.post(url+'/entities').json(req)
-  .then(function(res, body) {
-    t.ok(body.created_at);
+  const entity = _.omit(genEntity(), 'created_at');
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    t.ok(res.body.created_at, 'has created_at');
     t.end();
-  })
-  .catch(fail(t));
+  });
 });
 
 test('it should properly set the updated_at property of an Entity at update', function(t) {
-  var req = {
-    emails: ['updated1@example.com'],
-  };
-  var b1;
-  request.post(url+'/entities').json(req)
-  .then(function(res, body) {
-    b1 = body;
-    req.rev = body.rev;
-    req.emails.push('updated2@example.com');
-    return request.post(url+'/entities').json(req);
-  })
-  .then(function(res, body) {
-    t.equal(err.statusCode, 200);
-    t.ok(body.updated_at);
-    t.notEqual(b1.updated_at, body.updated_at);
-    t.end();
-  })
-  .catch(fail(t));
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    updatedEntity.emails.push(rando() + '@email.com');
+
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(updatedEntity)
+    .end((err, res) => {
+      t.notEqual(res.body.updated_at, updatedEntity.updated_at);
+      t.end();
+    });
+  });
 });
 
-test.skip('it should understand inheritance of permissions', function(t) {
+// Helper functions for below tests that require multiple entities
+function populateEntities(amount) {
+  const postEntity = () => new Promise((resolve, reject) => {
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(genEntity())
+    .expect(200)
+    .end((err, res) => resolve(res.body))
+  });
+
+  return Promise.all(_.times(amount, () => postEntity()));
+}
+
+function updateEntity(entity) {
+  return new Promise((resolve, reject) => {
+    request(server)
+    .put('/entities/' + entity.id)
+    .auth('test', key)
+    .send(entity)
+    .expect(200)
+    .end((err, res) => resolve(res.body))
+  });
+}
+
+test('it should understand inheritance of permissions (Alice, Bob, Managers)', function(t) {
   /**
    * There are three Entities in the system. Alice and Bob are users. Managers is a group. Alice has the permission `owner` over Managers. Managers has the permission `owner` over Bob. Therefore, Alice has the permission `owner` over Bob.
   **/
 
+  populateEntities(3)
+  .then(entities => {
+    var alice = entities[0];
+    var bob = entities[1];
+    var managers = entities[2];
+
+    managers.permissions.push({
+      type: 'owner',
+      entity: bob.id
+    });
+
+    alice.permissions.push({
+      type: 'owner',
+      entity: managers.id
+    });
+
+    updateEntity(managers)
+    .then(() => updateEntity(alice))
+    .then(alice => {
+      t.ok(_.some(alice.inherited_permissions, {
+        type: 'owner',
+        entity: bob.id
+      }), 'alice has permission owner over bob');
+      t.end();
+    });
+  });
+
+});
+
+test('it should understand inheritance of permissions (Steve, Georgina, Company)', function(t) {
   /**
    * There are three Entities in the system. Steve and Georgina are users. Company is a group. Georgina has the permission `member` of Company. Steve has the permission `owner` of Company. Company has no permissions. Steve does not have any permissions over Georgina.
   **/
 
+  populateEntities(3)
+  .then(entities => {
+    var steve = entities[0];
+    var georgina = entities[1];
+    var company = entities[2];
+
+    georgina.permissions.push({
+      type: 'member',
+      entity: company.id
+    });
+
+    steve.permissions.push({
+      type: 'owner',
+      entity: company.id
+    });
+
+    updateEntity(georgina)
+    .then(() => updateEntity(steve))
+    .then(steve => {
+      t.ok(!_.some(steve.inherited_permissions, {
+        type: 'owner',
+        entity: georgina.id
+      }), 'steve has no owner permission over georgina');
+
+      t.ok(!_.some(steve.inherited_permissions, {
+        type: 'member',
+        entity: georgina.id
+      }), 'steve no member permission over georgina');
+
+      t.end();
+    });
+  });
+});
+
+test('it should understand inheritance of permissions (Francois, Le Boulangerie, Gazzas Beans)', function(t) {
   /**
    * Inheritance must be linear. There are three entities in the system. Francois is a user. Le Boulangerie and Gazza's Beans are groups. Francois holds the permission `purchaser` over Le Boulangerie. Le Boulangerie holds the permission `customer` over Gazza's Beans. Francois must _not_ be a customer of Gazza's Beans.
   **/
 
-  // We should use a document store for this and calculate all the inherited_permissions at write time. This will mean that writes are slow, but reads are super fast. That's totally fine for this use case.
-  // The logic to update all of the inherited permissions at write time will be a little messy with some recursion, but that's okay.
+  populateEntities(3)
+  .then(entities => {
+    var francois = entities[0];
+    var leBoul = entities[1];
+    var gazzas = entities[2];
+
+    francois.permissions.push({
+      type: 'purchaser',
+      entity: leBoul.id
+    });
+
+    leBoul.permissions.push({
+      type: 'customer',
+      entity: gazzas.id
+    });
+
+    updateEntity(leBoul)
+    .then(() => updateEntity(francois))
+    .then(francois => {
+      t.ok(!_.some(francois.inherited_permissions, {
+        type: 'customer',
+        entity: gazzas.id
+      }), 'francois is not a customer of gazzas beans');
+
+      t.end();
+    });
+  });
+
+
 });
 
-test.skip('it should not allow a circular inheritance structure to be created', function(t) {
+test('it should not allow a circular inheritance structure to be created', function(t) {
   /**
    * Create three entities, one, two and three.
    * Give one permission over two
@@ -349,11 +600,36 @@ test.skip('it should not allow a circular inheritance structure to be created', 
    * Attempt to give three permission over one
    * You should get a 4xx and the permission should not be added
   **/
-});
 
-test('teardown server', function(t) {
-  server.end().then(serv => {
-    t.equal(serv, null, 'server is null');
-    t.end();
+  populateEntities(3)
+  .then(entities => {
+    var one = entities[0];
+    var two = entities[1];
+    var three = entities[2];
+
+    one.permissions.push({
+      type: 'owner',
+      entity: two.id
+    });
+
+    two.permissions.push({
+      type: 'owner',
+      entity: three.id
+    });
+
+    updateEntity(one)
+    .then(() => updateEntity(two))
+    .then(() => {
+      three.permissions.push({
+        type: 'owner',
+        entity: one.id
+      });
+
+      request(server)
+      .put('/entities/' + three.id)
+      .auth('test', key)
+      .send(three)
+      .expect(400, pass(t, 'permission not allowed'))
+    });
   });
 });

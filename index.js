@@ -1,3 +1,8 @@
 var config = require('root/config/index.json');
 require('required_env')(config.env);
-require('root/lib/server').start();
+var server = require('root/lib/server');
+
+server.listen(process.env.PORT, () => {
+  if (process.env.NODE_ENV != 'test')
+    console.log('%s listening at %s', server.name, server.url);
+});
