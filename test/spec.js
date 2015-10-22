@@ -26,7 +26,7 @@ const pass = (t, message) => (err) => {
 const rando = () => Math.floor(Math.random() * (1 << 24)).toString(16);
 
 const genEntity = () =>
-  _.assign(_.omit(entities[0], 'id'), { emails: [rando() + '@email.com'] });
+  _.assign(_.omit(entities[0], 'id'), { emails: [rando() + '@email.com'] }, { password: entities[0].plaintext_password });
 
 // Feel free to split these tests out into files, write additional ones, etc. Change the runner if you like.
 // I've written this spec in the mindset of e2e integration tests. ie: stand up a server and throw queries at it with superagent or request or similar. We should also write unit tests for the actual code as we go.
@@ -62,6 +62,7 @@ test('it should allow an authorised request to GET an Entity resource after POST
       res.body.rev = entity.rev
       res.body.created_at = entity.created_at
       res.body.updated_at = entity.updated_at
+      res.body.password = entity.password
     })
     .expect(200, _.assign({}, entity, {id: res.body.id}), pass(t, 'returned correct entity'));
   });
@@ -101,7 +102,7 @@ test('it should create a token given the correct password for a UID', function(t
     .auth('test', key)
     .send({
       id: entities[0].id,
-      password: entities[0].password
+      password: entities[0].plaintext_password
     })
     .expect(res => {
       t.ok(res.body.token, 'returned a token')
@@ -119,7 +120,7 @@ test('it should create a token given the correct password and an email', functio
     .auth('test', key)
     .send({
       email: entities[0].emails[0],
-      password: entities[0].password
+      password: entities[0].plaintext_password
     })
     .expect(res => {
       t.ok(res.body.token, 'returned a token')
@@ -138,7 +139,7 @@ test('it should not create a token given the incorrect password', function(t) {
       id: entities[0].id,
       password: 'wrong'
     })
-    .expect(403, { code: 'ForbiddenError', message: 'Invalid username, email or password' }, pass(t, 'returned 403 invalid username, email or password error'));
+    .expect(403, { code: 'ForbiddenError', message: 'Invalid password' }, pass(t, 'returned 403 invalid password error'));
   });
 });
 
@@ -151,8 +152,9 @@ test('it should return the Entity associated with a valid token', function(t) {
     .auth('test', key)
     .send({
       id: entities[0].id,
-      password: entities[0].password
+      password: entities[0].plaintext_password
     })
+    .expect(200)
     .end((err, res) => {
       request(server)
       .get('/entities?token=' + res.body.token)
@@ -215,6 +217,7 @@ test('it should return the Entity associated with a valid email', function(t) {
       res.body[0].rev = entity.rev
       res.body[0].created_at = entity.created_at
       res.body[0].updated_at = entity.updated_at
+      res.body[0].password = entity.password
     })
     .expect(200, [_.assign({}, entity, {id: res.body.id})], pass(t, 'returned correct entity'));
   });
@@ -244,6 +247,7 @@ test('it should return the Entity associated with a valid ID', function(t) {
       res.body.rev = entity.rev
       res.body.created_at = entity.created_at
       res.body.updated_at = entity.updated_at
+      res.body.password = entity.password
     })
     .expect(200, _.assign({}, entity, { id: res.body.id }), pass(t, 'returned correct entity'))
   });
@@ -293,9 +297,11 @@ test('it should return all Entities with a given permission', function(t) {
           res.body[0].rev = three.rev
           res.body[0].created_at = three.created_at
           res.body[0].updated_at = three.updated_at
+          res.body[0].password = three.password
           res.body[1].rev = two.rev
           res.body[1].created_at = two.created_at
           res.body[1].updated_at = two.updated_at
+          res.body[1].password = two.password
         })
         .expect(200)
         .end((err, res) => {

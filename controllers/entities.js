@@ -1,6 +1,7 @@
 var restify = require('restify');
 var schemaValidation = require('root/routes/middleware/schema_validation');
 var r = require('root/lib/r');
+var bcrypt = require('root/lib/bcrypt');
 const uuid = require('node-uuid')
 const fanout = require('root/lib/fanout');
 const _ = require('lodash');
@@ -22,7 +23,9 @@ exports.create = function(req, res, next) {
   entityBody.updated_at = currentTime;
   entityBody.rev = uuid.v4();
 
-  r.table('entities').insert(entityBody, { returnChanges: true })
+  if (entityBody.password) entityBody.password = bcrypt.hashSync(entityBody.password, 10);
+
+  return r.table('entities').insert(entityBody, { returnChanges: true })
   .then(result => {
     if (result.errors > 0) return next(result.first_error);
     return result.changes[0].new_val;

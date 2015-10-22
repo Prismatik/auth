@@ -8,7 +8,8 @@
     "full": "Alice",
     "short": "Al"
   },
-  "password": "eVmXazS3jsJ3CozuyXB8WInflmjfGd",
+  "password": "$2a$10$SCNWUybwWopzHz5DVex5PO3EXvmWJE8YNUyCCWPufmFYIvspee9My",
+  "plaintext_password": "eVmXazS3jsJ3CozuyXB8WInflmjfGd",
   "permissions": [],
   "inherited_permissions": []
 },
@@ -22,7 +23,8 @@
     "full": "Bob",
     "short": "Bob"
   },
-  "password": "eVmXazS3jsJ3CozuyXB8WInflmjfGd",
+  "password": "$2a$10$qlNTBr8WK71xvwg7FrqOZO83M6Plzd.YzzEpBaK1qMzNlX/WDfnG2",
+  "plaintext_password": "eVmXazS3jsJ3CozuyXB8WInflmjfGd",
   "permissions": [],
   "inherited_permissions": []
 },
@@ -36,7 +38,8 @@
     "full": "Garry",
     "short": "Gaz"
   },
-  "password": "eVmXazS3jsJ3CozuyXB8WInflmjfGd",
+  "password": "$2a$10$hzlpw2tppGmopTffSOHwHuY9IVzjYsgIKoeWOKSWzJCpFbaUkO58i",
+  "plaintext_password": "eVmXazS3jsJ3CozuyXB8WInflmjfGd",
   "permissions": [{
     "type": "owner",
     "entity": "015f04df-af79-450c-9c10-08bafc9a1da3"

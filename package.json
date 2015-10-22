@@ -13,6 +13,8 @@
   "author": "david@banham.id.au",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^0.8.5",
+    "bluebird": "^2.10.2",
     "json-schema-deref": "^0.1.9",
     "json-schema-random": "0.0.4",
     "json-schema-to-markdown": "^1.0.1",
