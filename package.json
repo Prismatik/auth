@@ -20,7 +20,6 @@
     "jsonwebtoken": "^5.4.0",
     "lodash": "^3.10.1",
     "node-uuid": "^1.4.3",
-    "promisify-node": "^0.2.1",
     "required_env": "^1.0.0",
     "restify": "^4.0.3",
     "rethinkdbdash": "^2.1.9"
