@@ -36,10 +36,17 @@ function addInherited(to, type, item) {
 }
 
 test('setup table', t => {
-  r.tableList().contains('entities').run()
-  .then(hasTable => hasTable ? r.tableDrop('entities').run() : null)
-  .then(() => r.tableCreate('entities').run())
-  .then(() => t.end())
+  var waitForTable = () => {
+    return r.tableList().contains('entities').run()
+    .then(hasTable => {
+      if (!hasTable) return waitForTable();
+
+      r.tableDrop('entities').run()
+      .then(() => r.tableCreate('entities').run())
+      .then(() => t.end())
+    });
+  };
+  return waitForTable();
 });
 
 test('fanout.resolvePermissions resolves if passed no changed permissions', t => {
