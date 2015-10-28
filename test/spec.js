@@ -111,6 +111,28 @@ test('it should create a token given the correct password for a UID', function(t
   });
 });
 
+test('it should create a token containing a uuid and email given the correct password for a UID', function(t) {
+  // Set up an entity, then POST to /login with the entity's UID and password. It should return a token with an email and an id
+  populateEntities(1)
+  .then(entities => {
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      id: entities[0].id,
+      password: entities[0].plaintext_password
+    })
+    .expect(res => {
+      t.ok(res.body.token, 'returned a token')
+      jwt.verify(res.body.token, process.env.JWT_SECRET, (err, decoded) => {
+        t.ok(decoded.id, entities[0].id, 'id should be present in the token');
+        t.ok(decoded.email, entities[0].emails[0], 'id should be present in the token');
+      });
+    })
+    .expect(200, pass(t, 'returned 200'));
+  });
+});
+
 test('it should create a token given the correct password and an email', function(t) {
   // Set up an entity, then POST to /login with the entity's email and password. It should return a token
   populateEntities(1)
