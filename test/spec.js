@@ -143,6 +143,20 @@ test('it should not create a token given the incorrect password', function(t) {
   });
 });
 
+test('it should not create a token given the incorrect email', function(t) {
+  populateEntities(1)
+  .then(entities => {
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      email: 'wat@example.com',
+      password: entities[0].plaintext_password
+    })
+    .expect(403, { code: 'ForbiddenError', message: 'Invalid username' }, pass(t, 'returned 403 invalid username error'));
+  });
+});
+
 test('it should return the Entity associated with a valid token', function(t) {
   // GET /entities?token=some_jwt should return the Entity you expect it to. To stay RESTful this should be an array that only ever has one element.
   populateEntities(1)

@@ -22,11 +22,15 @@ exports.login = (req, res, next) => {
     entity = entity
     .filter(entity =>
       entity('emails').setIntersection([req.body.email]).count().gt(0))
-    .nth(0);
+    .limit(1);
   }
 
   entity.run()
-  .then(entity => {
+  .then(entities => {
+    let entity = entities;
+    if (Array.isArray(entities)) {
+      entity = entities[0];
+    }
     if (!entity) {
       throw new restify.ForbiddenError('Invalid username');
     }
