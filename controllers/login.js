@@ -27,7 +27,7 @@ exports.login = (req, res, next) => {
 
   entity.run()
   .then(entities => {
-    var entity = entities;
+    let entity = entities;
     if (Array.isArray(entities)) {
       entity = entities[0];
     }
