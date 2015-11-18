@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node test/index.js",
+    "test": "BLUEBIRD_WARNINGS=0 node test/index.js",
     "start": "node index.js"
   },
   "engines": {
