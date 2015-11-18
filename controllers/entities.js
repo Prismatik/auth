@@ -34,7 +34,7 @@ exports.create = function(req, res, next) {
     .then(() => r.table('entities').get(entity.id))
     .then(entity => res.send(entity))
   )
-  .then(next)
+  .then(() => next())
   .catch(next);
 };
 
