@@ -20,8 +20,7 @@ exports.login = (req, res, next) => {
     entity = entity.get(req.body.id);
   } else {
     entity = entity
-    .filter(entity =>
-      entity('emails').setIntersection([req.body.email]).count().gt(0))
+    .getAll(req.body.email, { index: 'emails' })
     .limit(1);
   }
 
