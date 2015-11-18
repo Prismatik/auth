@@ -35,13 +35,6 @@ function addInherited(to, type, item) {
   })).run();
 }
 
-test('setup table', t => {
-  r.tableList().contains('entities').run()
-  .then(hasTable => hasTable ? r.tableDrop('entities').run() : null)
-  .then(() => r.tableCreate('entities').run())
-  .then(() => t.end())
-});
-
 test('fanout.resolvePermissions resolves if passed no changed permissions', t => {
   fanout.resolvePermissions().then(() => {
     t.pass('fanout.resolvePermissions resolves');
