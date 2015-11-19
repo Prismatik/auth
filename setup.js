@@ -9,7 +9,7 @@ module.exports = function setUp() {
   })
   .then(() => r.tableCreate('entities').run())
   .catch((err) => {
-    if (err.message.split('\n')[0] === 'Table `auth.entities` already exists in:') return;
+    if (err.message.split('\n')[0] === 'Table `'+process.env.RETHINK_NAME+'.entities` already exists in:') return;
     throw err;
   })
   .then(() => r.table('entities').indexCreate('emails', { multi: true }).run())
