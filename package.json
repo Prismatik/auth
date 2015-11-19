@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node test/index.js",
+    "test": "BLUEBIRD_WARNINGS=0 node test/index.js",
     "start": "node index.js"
   },
   "engines": {
@@ -24,7 +24,7 @@
     "node-uuid": "^1.4.3",
     "required_env": "^1.0.0",
     "restify": "^4.0.3",
-    "rethinkdbdash": "^2.1.9"
+    "rethinkdbdash": "^2.2.1"
   },
   "devDependencies": {
     "proxyquire": "^1.7.2",

@@ -51,8 +51,7 @@ exports.getAll = function(req, res, next) {
   if (req.query.token) {
     return Entity.decodeToken(req.query.token)
     .then(decoded =>
-      r.table('entities').filter(entity =>
-        entity('emails').contains(decoded.email)).run())
+      r.table('entities').getAll(decoded.email, { index: 'emails' }).run())
     .then(entities => {
       if (!entities || entities.length === 0) {
         res.send(404);
