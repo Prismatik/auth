@@ -1,3 +1,4 @@
+'use strict';
 var config = require('root/config');
 require('required_env')(config.env);
 var test = require('./tape');
@@ -7,6 +8,8 @@ var _ = require('lodash');
 var entities = require('root/test/fixtures/entities');
 var r = require('root/lib/r');
 var jwt = require('jsonwebtoken');
+var uuid = require('node-uuid');
+var assert = require('assert');
 
 const key = process.env.API_KEY;
 
@@ -55,6 +58,30 @@ test('it should allow an authorised request to GET an Entity resource after POST
   .send(entity)
   .expect(200)
   .end((err, res) => {
+    request(server)
+    .get('/entities/' + res.body.id)
+    .auth('test', key)
+    .expect(res => {
+      res.body.rev = entity.rev
+      res.body.created_at = entity.created_at
+      res.body.updated_at = entity.updated_at
+      res.body.password = entity.password
+    })
+    .expect(200, _.assign({}, entity, {id: res.body.id}), pass(t, 'returned correct entity'));
+  });
+});
+
+test('it should allow an authorised request to GET an Entity resource after POSTing it with a specified uuid', function(t) {
+  let entity = genEntity();
+  entity.id = uuid.v4();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .expect(200)
+  .end((err, res) => {
+    assert.equal(res.body.id, entity.id);
     request(server)
     .get('/entities/' + res.body.id)
     .auth('test', key)
