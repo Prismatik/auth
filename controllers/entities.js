@@ -11,7 +11,7 @@ exports.route = function(server) {
   server.post('/entities', Entity.validateEmail, exports.create);
   server.get('/entities', exports.getAll);
   server.get('/entities/:id', exports.read);
-  server.put('/entities/:id', Entity.validateEmail, Entity.validateRevision, exports.update);
+  server.post('/entities/:id', Entity.validateEmail, Entity.validateRevision, exports.update);
 };
 
 exports.create = function(req, res, next) {

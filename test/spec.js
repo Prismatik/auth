@@ -438,7 +438,7 @@ test('it should allow an Entity to be updated if the rev property matches the ex
     updatedEntity.emails.push(rando() + '@email.com')
 
     request(server)
-    .put('/entities/' + updatedEntity.id)
+    .post('/entities/' + updatedEntity.id)
     .auth('test', key)
     .send(updatedEntity)
     .expect(res => {
@@ -521,7 +521,7 @@ function populateEntities(amount) {
 function updateEntity(entity) {
   return new Promise((resolve, reject) => {
     request(server)
-    .put('/entities/' + entity.id)
+    .post('/entities/' + entity.id)
     .auth('test', key)
     .send(entity)
     .expect(200)
@@ -673,7 +673,7 @@ test('it should not allow a circular inheritance structure to be created', funct
       });
 
       request(server)
-      .put('/entities/' + three.id)
+      .post('/entities/' + three.id)
       .auth('test', key)
       .send(three)
       .expect(400, pass(t, 'permission not allowed'))
