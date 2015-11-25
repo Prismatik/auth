@@ -30,10 +30,11 @@ exports.create = function(req, res, next) {
     if (result.errors > 0) return next(result.first_error);
     return result.changes[0].new_val;
   })
-  .then(entity =>
-    fanout.resolvePermissions(entity.id, req.body.permissions)
-    .then(() => res.send(entity)))
-  .then(next)
+  .then(entity => fanout.resolvePermissions(entity.id, req.body.permissions)
+    .then(() => r.table('entities').get(entity.id))
+    .then(entity => res.send(entity))
+  )
+  .then(() => next())
   .catch(next);
 };
 

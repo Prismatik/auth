@@ -680,3 +680,42 @@ test('it should not allow a circular inheritance structure to be created', funct
     });
   });
 });
+
+test('it should return an entity with the correct permissions after creation', function(t) {
+  populateEntities(2)
+  .then(entities => {
+    var one = entities[0];
+    var two = entities[1];
+
+    two.permissions.push({
+      type: 'owner',
+      entity: one.id
+    });
+
+    updateEntity(two)
+    .then(() => {
+      var entity = genEntity();
+
+      entity.permissions = [
+        { type: 'owner', entity: two.id }
+      ];
+
+      request(server)
+      .post('/entities')
+      .auth('test', key)
+      .send(entity)
+      .expect(res => {
+        t.ok(_.some(res.body.inherited_permissions, {
+          entity: one.id,
+          type: 'owner'
+        }), 'contains inherited permissions');
+
+        t.ok(_.some(res.body.permissions, {
+          entity: two.id,
+          type: 'owner'
+        }), 'contains permissions');
+      })
+      .expect(200, pass(t, 'entity returned correctly'));
+    });
+  });
+});
