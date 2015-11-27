@@ -3,7 +3,7 @@
   "rev": "5f8f51e1-732d-418f-98a8-c9380524da50",
   "created_at": "2012-01-01T12:00:00Z",
   "updated_at": "2012-01-01T12:00:00Z",
-  "emails": ["alice@inchains.com.au"],
+  "emails": ["alice@example.com"],
   "name": {
     "full": "Alice",
     "short": "Al"
@@ -18,7 +18,7 @@
   "rev": "5f8f51e1-732d-418f-98a8-c9380524da50",
   "created_at": "2012-01-01T12:00:00Z",
   "updated_at": "2012-01-01T12:00:00Z",
-  "emails": ["bob@bobatron.com.au"],
+  "emails": ["bob@example.com"],
   "name": {
     "full": "Bob",
     "short": "Bob"
@@ -33,7 +33,7 @@
   "rev": "5f8f51e1-732d-418f-98a8-c9380524da50",
   "created_at": "2012-01-01T12:00:00Z",
   "updated_at": "2012-01-01T12:00:00Z",
-  "emails": ["garry@topdollarcurtains.com.au"],
+  "emails": ["garry@example.com"],
   "name": {
     "full": "Garry",
     "short": "Gaz"
@@ -51,7 +51,7 @@
   "rev": "5f8f51e1-732d-418f-98a8-c9380524da50",
   "created_at": "2012-01-01T12:00:00Z",
   "updated_at": "2012-01-01T12:00:00Z",
-  "emails": ["managers@thatplace.com.au"],
+  "emails": ["managers@example.com"],
   "name": {
     "full": "Managers",
     "short": "Man?"

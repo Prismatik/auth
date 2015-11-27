@@ -29,7 +29,7 @@ const pass = (t, message) => (err) => {
 const rando = () => Math.floor(Math.random() * (1 << 24)).toString(16);
 
 const genEntity = () =>
-  _.assign(_.omit(entities[0], 'id'), { emails: [rando() + '@email.com'] }, { password: entities[0].plaintext_password });
+  _.assign(_.omit(entities[0], 'id'), { emails: [rando() + '@example.com'] }, { password: entities[0].plaintext_password });
 
 // Feel free to split these tests out into files, write additional ones, etc. Change the runner if you like.
 // I've written this spec in the mindset of e2e integration tests. ie: stand up a server and throw queries at it with superagent or request or similar. We should also write unit tests for the actual code as we go.
@@ -435,7 +435,7 @@ test('it should allow an Entity to be updated if the rev property matches the ex
   .send(entity)
   .end((err, res) => {
     var updatedEntity = res.body;
-    updatedEntity.emails.push(rando() + '@email.com')
+    updatedEntity.emails.push(rando() + '@example.com')
 
     request(server)
     .post('/entities/' + updatedEntity.id)
@@ -458,7 +458,7 @@ test('it should not allow an Entity to be updated if the rev property does not m
   .send(entity)
   .end((err, res) => {
     var updatedEntity = res.body;
-    updatedEntity.emails.push(rando() + '@email.com');
+    updatedEntity.emails.push(rando() + '@example.com');
     updatedEntity.rev = 'foo';
 
     request(server)
@@ -491,7 +491,7 @@ test('it should properly set the updated_at property of an Entity at update', fu
   .send(entity)
   .end((err, res) => {
     var updatedEntity = res.body;
-    updatedEntity.emails.push(rando() + '@email.com');
+    updatedEntity.emails.push(rando() + '@example.com');
 
     request(server)
     .post('/entities')

@@ -9,7 +9,7 @@ const key = process.env.API_KEY;
 const rando = () => Math.floor(Math.random() * (1 << 24)).toString(16);
 
 const genEntity = () =>
-  _.assign(_.omit(entities[0], 'id'), { emails: [rando() + '@email.com'] }, { password: entities[0].plaintext_password });
+  _.assign(_.omit(entities[0], 'id'), { emails: [rando() + '@example.com'] }, { password: entities[0].plaintext_password });
 
 test('BENCH post a single Entity resource', function(t) {
   const name = this.name;
