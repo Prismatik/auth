@@ -469,6 +469,26 @@ test('it should not allow an Entity to be updated if the rev property does not m
   });
 });
 
+test('it should refuse to consider an update request without a supplied rev', function(t) {
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    updatedEntity.emails.push(rando() + '@example.com');
+    updatedEntity.rev = undefined;
+
+    request(server)
+    .post('/entities/'+updatedEntity.id)
+    .auth('test', key)
+    .send(updatedEntity)
+    .expect(400, pass(t, 'returned 400'));
+  });
+});
+
 test('it should properly set the created_at property of an Entity on creation', function(t) {
   const entity = _.omit(genEntity(), 'created_at');
 
