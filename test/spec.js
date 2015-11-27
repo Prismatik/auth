@@ -462,9 +462,9 @@ test('it should not allow an Entity to be updated if the rev property does not m
     updatedEntity.rev = 'foo';
 
     request(server)
-    .post('/entities')
+    .post('/entities/'+updatedEntity.id)
     .auth('test', key)
-    .send(entity)
+    .send(updatedEntity)
     .expect(409, pass(t, 'returned 409'));
   });
 });
