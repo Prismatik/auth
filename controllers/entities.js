@@ -23,7 +23,8 @@ exports.create = function(req, res, next) {
   entityBody.updated_at = currentTime;
   entityBody.rev = uuid.v4();
 
-  if (entityBody.password) entityBody.password = bcrypt.hashSync(entityBody.password, 10);
+  if (entityBody.password && !entityBody.password_hash) entityBody.password = bcrypt.hashSync(entityBody.password, 10);
+  if (entityBody.password_hash) entityBody.password = entityBody.password_hash;
 
   return r.table('entities').insert(entityBody, { returnChanges: true })
   .then(result => {
