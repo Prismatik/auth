@@ -16,7 +16,7 @@ exports.route = function(server) {
 
 exports.create = function(req, res, next) {
   // create entity first before attempting to resolve permissions
-  var entityBody = _.assign({}, req.body, Entity.defaultEntity);
+  var entityBody = _.assign({}, Entity.defaultEntity, req.body);
   var currentTime = (new Date()).toISOString();
 
   entityBody.created_at = currentTime;
