@@ -462,10 +462,30 @@ test('it should not allow an Entity to be updated if the rev property does not m
     updatedEntity.rev = 'foo';
 
     request(server)
-    .post('/entities')
+    .post('/entities/'+updatedEntity.id)
     .auth('test', key)
-    .send(entity)
+    .send(updatedEntity)
     .expect(409, pass(t, 'returned 409'));
+  });
+});
+
+test('it should refuse to consider an update request without a supplied rev', function(t) {
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    updatedEntity.emails.push(rando() + '@example.com');
+    updatedEntity.rev = undefined;
+
+    request(server)
+    .post('/entities/'+updatedEntity.id)
+    .auth('test', key)
+    .send(updatedEntity)
+    .expect(400, pass(t, 'returned 400'));
   });
 });
 
