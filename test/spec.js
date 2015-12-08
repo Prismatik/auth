@@ -64,6 +64,21 @@ test('it should use the password_hash field if provided', function(t) {
   });
 });
 
+test('it should strip the password_hash field if provided', function(t) {
+  var entity = genEntity();
+  entity.password_hash = 'foo';
+  delete entity.password;
+
+  request(server).post('/entities')
+  .send(entity)
+  .auth('test', key)
+  .expect(200)
+  .then(function(res) {
+    assert(!res.body.password_hash);
+    pass(t, 'returned 200')();
+  });
+});
+
 test('it should allow an authorised request to GET an Entity resource after POSTing it', function(t) {
   const entity = genEntity();
 
