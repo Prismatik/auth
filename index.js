@@ -9,3 +9,7 @@ setup().then(() => {
       console.log('%s listening at %s', server.name, server.url);
   });
 });
+
+process.on('unhandledRejection', function(reason, p) {
+  console.error("Unhandled Rejection at: Promise ", p, " reason: ", reason);
+});
