@@ -89,7 +89,9 @@ exports.update = function(req, res, next) {
 
     updatedEntity.updated_at = (new Date()).toISOString();
     updatedEntity.rev = uuid.v4();
-
+    return updatedEntity;
+  })
+  .then(updatedEntity => {
     return r.table('entities')
     .get(req.params.id)
     .update(updatedEntity, { returnChanges: true })

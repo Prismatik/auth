@@ -680,6 +680,40 @@ test('it should not return the password with an updated Entity', function(t) {
   });
 });
 
+test('it should not modify the password field if password is undefined on update', function(t) {
+  const entity = genEntity();
+  t.ok(entity.password);
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    t.ok(!updatedEntity.password);
+    updatedEntity.emails.push(rando() + '@example.com');
+
+    request(server)
+    .post('/entities/'+res.body.id)
+    .auth('test', key)
+    .send(updatedEntity)
+    .end((err, res) => {
+      t.notEqual(res.body.updated_at, updatedEntity.updated_at);
+      request(server)
+      .post('/login')
+      .auth('test', key)
+      .send({
+        id: res.body.id,
+        password: entity.password
+      })
+      .end((err, res) => {
+        t.ok(res.body.token, 'returned a token, implying the password was unchanged');
+        t.end();
+      });
+    });
+  });
+});
+
 // Helper functions for below tests that require multiple entities
 function populateEntities(amount) {
   const postEntity = () => new Promise((resolve, reject) => {
