@@ -714,6 +714,95 @@ test('it should not modify the password field if password is undefined on update
   });
 });
 
+test('it should hash a passed password on update', function(t) {
+  const entity = genEntity();
+  t.ok(entity.password);
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    updatedEntity.password = rando();
+
+    request(server)
+    .post('/entities/'+res.body.id)
+    .auth('test', key)
+    .send(updatedEntity)
+    .end((err, res) => {
+      t.notEqual(res.body.updated_at, updatedEntity.updated_at);
+      request(server)
+      .post('/login')
+      .auth('test', key)
+      .send({
+        id: res.body.id,
+        password: updatedEntity.password
+      })
+      .end((err, res) => {
+        t.ok(res.body.token, 'returned a token, implying the password was changed');
+        t.end();
+      });
+    });
+  });
+});
+
+test('it should accept a password_hash property on update', function(t) {
+  const entity = genEntity();
+  t.ok(entity.password);
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    updatedEntity.password_hash = '$2a$10$CRmYQOH8CQ/Oq4Tdl19E1OatkoKGZLXty6/W1BDEOGOEaZy6THwBK';
+
+    request(server)
+    .post('/entities/'+res.body.id)
+    .auth('test', key)
+    .send(updatedEntity)
+    .end((err, res) => {
+      t.notEqual(res.body.updated_at, updatedEntity.updated_at);
+      request(server)
+      .post('/login')
+      .auth('test', key)
+      .send({
+        id: res.body.id,
+        password: 'foo'
+      })
+      .end((err, res) => {
+        t.ok(res.body.token, 'returned a token, implying the password was changed');
+        t.end();
+      });
+    });
+  });
+});
+
+test('it should strip the password_hash property on update', function(t) {
+  const entity = genEntity();
+  t.ok(entity.password);
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    updatedEntity.password_hash = '$2a$10$CRmYQOH8CQ/Oq4Tdl19E1OatkoKGZLXty6/W1BDEOGOEaZy6THwBK';
+
+    request(server)
+    .post('/entities/'+res.body.id)
+    .auth('test', key)
+    .send(updatedEntity)
+    .end((err, res) => {
+      t.ok(!res.body.password_hash, 'should not have a password hash');
+      t.end();
+    });
+  });
+});
+
 // Helper functions for below tests that require multiple entities
 function populateEntities(amount) {
   const postEntity = () => new Promise((resolve, reject) => {

@@ -87,6 +87,10 @@ exports.update = function(req, res, next) {
     // inherited_permissions are server-generated and blocked from consumer input
     var updatedEntity = _.omit(req.body, 'inherited_permissions');
 
+    if (updatedEntity.password && !updatedEntity.password_hash) updatedEntity.password = bcrypt.hashSync(updatedEntity.password, 10);
+    if (updatedEntity.password_hash) updatedEntity.password = updatedEntity.password_hash;
+    delete updatedEntity.password_hash;
+
     updatedEntity.updated_at = (new Date()).toISOString();
     updatedEntity.rev = uuid.v4();
     return updatedEntity;
