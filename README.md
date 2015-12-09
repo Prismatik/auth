@@ -1,4 +1,4 @@
-[![Build Status](https://magnum.travis-ci.com/Prismatik/auth.svg?token=rFUGfrjjDVCsE6U1mRc9&branch=master)](https://magnum.travis-ci.com/Prismatik/auth)<F37>
+[![Build Status](https://travis-ci.org/Prismatik/auth.svg)](https://travis-ci.org/Prismatik/auth)
 
 # Auth Service
 A generically useful authentication and authorisation server based on a
