@@ -36,7 +36,7 @@ exports.login = (req, res, next) => {
 
     return bcrypt.compareAsync(req.body.password, entity.password)
     .catch( err => {
-      if (err) return reject(new restify.InternalServerError('Error checking password'));
+      if (err) throw new restify.InternalServerError('Error checking password');
     })
     .then( match => {
       if (!match) throw new restify.ForbiddenError('Invalid password');
