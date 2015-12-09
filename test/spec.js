@@ -51,7 +51,7 @@ test('it should allow an authorised request to POST an Entity resource', functio
 
 test('it should use the password_hash field if provided', function(t) {
   var entity = genEntity();
-  entity.password_hash = 'foo';
+  entity.password_hash = '$2a$10$CRmYQOH8CQ/Oq4Tdl19E1OatkoKGZLXty6/W1BDEOGOEaZy6THwBK';
   delete entity.password;
 
   request(server).post('/entities')
@@ -59,8 +59,17 @@ test('it should use the password_hash field if provided', function(t) {
   .auth('test', key)
   .expect(200)
   .then(function(res) {
-    assert.equal(res.body.password, 'foo');
-    pass(t, 'returned 200')();
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      id: res.body.id,
+      password: 'foo'
+    })
+    .end((err, res) => {
+      t.ok(res.body.token, 'returned a token, implying the password hash was used');
+      t.end();
+    });
   });
 });
 
@@ -98,6 +107,20 @@ test('it should allow an authorised request to GET an Entity resource after POST
       res.body.password = entity.password
     })
     .expect(200, _.assign({}, entity, {id: res.body.id}), pass(t, 'returned correct entity'));
+  });
+});
+
+test('it should not return a password on the response from POSTing an Entity', function(t) {
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .expect(200)
+  .end((err, res) => {
+    t.ok(!res.body.password, 'did not return a password');
+    t.end();
   });
 });
 
@@ -218,6 +241,7 @@ test('it should return the Entity associated with a valid token', function(t) {
   // GET /entities?token=some_jwt should return the Entity you expect it to. To stay RESTful this should be an array that only ever has one element.
   populateEntities(1)
   .then(entities => {
+    delete entities[0].password;
     request(server)
     .post('/login')
     .auth('test', key)
@@ -231,6 +255,36 @@ test('it should return the Entity associated with a valid token', function(t) {
       .get('/entities?token=' + res.body.token)
       .auth('test', key)
       .expect(200, [entities[0]], pass(t, 'returned the entity associated with a valid token'));
+    });
+  });
+
+});
+
+test('it should not include a password when returning the Entity associated with a valid token', function(t) {
+  // GET /entities?token=some_jwt should return the Entity you expect it to. To stay RESTful this should be an array that only ever has one element.
+  populateEntities(1)
+  .then(entities => {
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      id: entities[0].id,
+      password: entities[0].plaintext_password
+    })
+    .expect(200)
+    .end((err, res) => {
+      request(server)
+      .get('/entities?token=' + res.body.token)
+      .auth('test', key)
+      .end((err, res) => {
+        t.ok(res.body.length > 0, 'some entities were returned');
+        const okay = res.body.reduce((ok, ent) => {
+          if (ent.password) ok = false;
+          return ok;
+        }, true);
+        t.ok(okay, 'password was not returned on any entity');
+        t.end();
+      });
     });
   });
 
@@ -395,6 +449,53 @@ test('it should not return any Entity given an invalid permission', function(t) 
   .expect(200, [], pass(t, 'returned 0 entities'));
 });
 
+test('it should not return anything in the password field for single GETs', function(t) {
+  const entity = genEntity();
+  assert(entity.password);
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .expect(200)
+  .end((err, res) => {
+    request(server)
+    .get('/entities/' + res.body.id)
+    .auth('test', key)
+    .expect(200)
+    .end((err, res)=> {
+      t.ok(!res.body.password, 'password was not returned');
+      t.end();
+    });
+  });
+});
+
+test('it should not return anything in the password field for many GETs', function(t) {
+  const entity = genEntity();
+  assert(entity.password);
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .expect(200)
+  .end((err, res) => {
+    request(server)
+    .get('/entities')
+    .auth('test', key)
+    .expect(200)
+    .end((err, res)=> {
+      t.ok(res.body.length > 0, 'some entities were returned');
+      const okay = res.body.reduce((ok, ent) => {
+        if (ent.password) ok = false;
+        return ok;
+      }, true);
+      t.ok(okay, 'password was not returned on any entity');
+      t.end();
+    });
+  });
+});
+
 test('it should allow composition of filters and paramaters', function(t) {
   // GET /entities/some_uuid?perm.type=membership&perm.entity=some_uuid should return an Entity if the Entity described by that uuid has the requested permission. If they don't have the requested permission it should 404
 
@@ -467,6 +568,9 @@ test('it should allow an Entity to be updated if the rev property matches the ex
     var updatedEntity = res.body;
     updatedEntity.emails.push(rando() + '@example.com')
 
+    var expected = JSON.parse(JSON.stringify(updatedEntity));
+    delete expected.password;
+
     request(server)
     .post('/entities/' + updatedEntity.id)
     .auth('test', key)
@@ -475,7 +579,7 @@ test('it should allow an Entity to be updated if the rev property matches the ex
       res.body.rev = updatedEntity.rev
       res.body.updated_at = updatedEntity.updated_at
     })
-    .expect(200, updatedEntity, pass(t, 'returned updated entity'))
+    .expect(200, expected, pass(t, 'returned updated entity'))
   });
 });
 
@@ -544,11 +648,33 @@ test('it should properly set the updated_at property of an Entity at update', fu
     updatedEntity.emails.push(rando() + '@example.com');
 
     request(server)
-    .post('/entities')
+    .post('/entities/'+res.body.id)
     .auth('test', key)
     .send(updatedEntity)
     .end((err, res) => {
       t.notEqual(res.body.updated_at, updatedEntity.updated_at);
+      t.end();
+    });
+  });
+});
+
+test('it should not return the password with an updated Entity', function(t) {
+  const entity = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    var updatedEntity = res.body;
+    updatedEntity.emails.push(rando() + '@example.com');
+
+    request(server)
+    .post('/entities/'+res.body.id)
+    .auth('test', key)
+    .send(updatedEntity)
+    .end((err, res) => {
+      t.ok(!res.body.password);
       t.end();
     });
   });
