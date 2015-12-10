@@ -25,7 +25,15 @@ exports.create = function(req, res, next) {
 
   if (entityBody.password) entityBody.password = bcrypt.hashSync(entityBody.password, 10);
 
-  return r.table('entities').insert(entityBody, { returnChanges: true })
+  r.table('entities').indexWait('emails').do(() => { // Must wait for the index to be ready, otherwise it's a race condition to write the entity, then write a second before the index updates
+    return r.table('entities').getAll(r.args(entityBody.emails), { index: 'emails' }).count().do(count => {
+      return r.branch(
+        count.eq(0),
+        r.table('entities').insert(entityBody, { returnChanges: true }),
+        r.error('emails must be unique')
+      )
+    })
+  })
   .then(result => {
     if (result.errors > 0) return next(result.first_error);
     return result.changes[0].new_val;
