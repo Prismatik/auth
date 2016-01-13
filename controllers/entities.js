@@ -27,16 +27,23 @@ exports.create = function(req, res, next) {
   if (entityBody.password_hash) entityBody.password = entityBody.password_hash;
   delete entityBody.password_hash;
 
-  r.table('entities').indexWait('emails').do(() => { // Must wait for the index to be ready, otherwise it's a race condition to write the entity, then write a second before the index updates
-    return r.table('entities').getAll(r.args(entityBody.emails), { index: 'emails' }).count().do(count => {
-      return r.branch(
-        count.eq(0),
-        r.table('entities').insert(entityBody, { returnChanges: true }),
-        r.error('emails must be unique')
-      )
+  //TODO: this is pretty ugly. Could use a refactor
+  var dbQuery;
+
+  if (entityBody.emails) {
+    dbQuery = r.table('entities').indexWait('emails').do(() => { // Must wait for the index to be ready, otherwise it's a race condition to write the entity, then write a second before the index updates
+      return r.table('entities').getAll(r.args(entityBody.emails), { index: 'emails' }).count().do(count => {
+        return r.branch(
+          count.eq(0),
+          r.table('entities').insert(entityBody, { returnChanges: true }),
+          r.error('emails must be unique')
+        )
+      })
     })
-  })
-  .then(result => {
+  } else {
+    dbQuery = r.table('entities').insert(entityBody, { returnChanges: true });
+  }
+  dbQuery.then(result => {
     if (result.errors > 0) return next(result.first_error);
     return result.changes[0].new_val;
   })
@@ -90,6 +97,7 @@ exports.getAll = function(req, res, next) {
 };
 
 exports.update = function(req, res, next) {
+  //TODO: Should check for email uniqueness here as well as on creation
   fanout.resolvePermissions(req.params.id, req.body.permissions)
   .then(() => {
     // inherited_permissions are server-generated and blocked from consumer input

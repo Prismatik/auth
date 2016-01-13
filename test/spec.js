@@ -49,6 +49,15 @@ test('it should allow an authorised request to POST an Entity resource', functio
   .expect(200, pass(t, 'returned 200'));
 });
 
+test('it should allow an authorised request to POST an Entity resource with no email array', function(t) {
+  var entity = genEntity();
+  delete entity.emails;
+  request(server).post('/entities')
+  .send(entity)
+  .auth('test', key)
+  .expect(200, pass(t, 'returned 200'));
+});
+
 test('it should use the password_hash field if provided', function(t) {
   var entity = genEntity();
   entity.password_hash = '$2a$10$CRmYQOH8CQ/Oq4Tdl19E1OatkoKGZLXty6/W1BDEOGOEaZy6THwBK';
