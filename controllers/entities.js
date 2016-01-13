@@ -23,7 +23,9 @@ exports.create = function(req, res, next) {
   entityBody.updated_at = currentTime;
   entityBody.rev = uuid.v4();
 
-  if (entityBody.password) entityBody.password = bcrypt.hashSync(entityBody.password, 10);
+  if (entityBody.password && !entityBody.password_hash) entityBody.password = bcrypt.hashSync(entityBody.password, 10);
+  if (entityBody.password_hash) entityBody.password = entityBody.password_hash;
+  delete entityBody.password_hash;
 
   return r.table('entities').insert(entityBody, { returnChanges: true })
   .then(result => {
@@ -31,7 +33,7 @@ exports.create = function(req, res, next) {
     return result.changes[0].new_val;
   })
   .then(entity => fanout.resolvePermissions(entity.id, req.body.permissions)
-    .then(() => r.table('entities').get(entity.id))
+    .then(() => r.table('entities').get(entity.id).without('password'))
     .then(entity => res.send(entity))
   )
   .then(() => next())
@@ -42,6 +44,7 @@ exports.read = function(req, res, next) {
   Entity.buildQuery(req.query, req.params).run()
   .then(entity => {
     if (!entity) return next(new restify.NotFoundError('Entity not found'));
+    delete entity.password;
     res.send(entity);
     return next()
   })
@@ -53,6 +56,12 @@ exports.getAll = function(req, res, next) {
     return Entity.decodeToken(req.query.token)
     .then(decoded =>
       r.table('entities').getAll(decoded.email, { index: 'emails' }).run())
+    .then(entities => {
+      return entities.map(ent => {
+        delete ent.password;
+        return ent;
+      });
+    })
     .then(entities => {
       if (!entities || entities.length === 0) {
         res.send(404);
@@ -67,7 +76,7 @@ exports.getAll = function(req, res, next) {
     });
   }
 
-  Entity.buildQuery(req.query, req.params).run()
+  Entity.buildQuery(req.query, req.params).without('password').run()
   .then(entities => res.send(entities))
   .catch(next);
 };
@@ -78,9 +87,15 @@ exports.update = function(req, res, next) {
     // inherited_permissions are server-generated and blocked from consumer input
     var updatedEntity = _.omit(req.body, 'inherited_permissions');
 
+    if (updatedEntity.password && !updatedEntity.password_hash) updatedEntity.password = bcrypt.hashSync(updatedEntity.password, 10);
+    if (updatedEntity.password_hash) updatedEntity.password = updatedEntity.password_hash;
+    delete updatedEntity.password_hash;
+
     updatedEntity.updated_at = (new Date()).toISOString();
     updatedEntity.rev = uuid.v4();
-
+    return updatedEntity;
+  })
+  .then(updatedEntity => {
     return r.table('entities')
     .get(req.params.id)
     .update(updatedEntity, { returnChanges: true })
@@ -88,6 +103,7 @@ exports.update = function(req, res, next) {
   })
   .then(result => {
     if (result.errors > 0) return next(result.first_error);
+    delete result.changes[0].new_val.password;
     res.send(result.changes[0].new_val);
     return next();
   })
