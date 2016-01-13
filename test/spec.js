@@ -186,7 +186,6 @@ test('it should enforce that emails are unique even when two requests are made s
     .auth('test', key)
     .send(entity)
   ]).then(results => {
-    console.log(results[0].body, results[1].body);
     t.notDeepEqual(results[0].body.emails, results[1].body.emails);
     t.end();
   });
