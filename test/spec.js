@@ -173,6 +173,25 @@ test('it should enforce that emails are unique', function(t) {
   });
 });
 
+test('it should enforce that emails are unique even when two requests are made simultaneously', function(t) {
+  const entity = genEntity();
+
+  Promise.all([
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(entity),
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(entity)
+  ]).then(results => {
+    console.log(results[0].body, results[1].body);
+    t.notDeepEqual(results[0].body.emails, results[1].body.emails);
+    t.end();
+  });
+});
+
 test('it should create a token given the correct password for a UID', function(t) {
   // Set up an entity, then POST to /login with the entity's UID and password. It should return a token
   populateEntities(1)
