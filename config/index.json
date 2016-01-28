@@ -6,6 +6,8 @@
     {"var": "API_KEY", "default": "hai"},
     {"var": "RETHINK_HOST", "default": "127.0.0.1"},
     {"var": "RETHINK_PORT", "default": "28015"},
-    {"var": "RETHINK_NAME", "default": "auth"}
+    {"var": "RETHINK_NAME", "default": "auth"},
+    {"var": "RETHINK_TABLE", "default": "entities"},
+    {"var": "TENANT_POLL_INTERVAL", "default": 10000}
   ]
 }

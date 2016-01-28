@@ -15,6 +15,8 @@ exports.route = function(server) {
 };
 
 exports.create = function(req, res, next) {
+  const table = req.tenancy || process.env.RETHINK_TABLE;
+
   // create entity first before attempting to resolve permissions
   var entityBody = _.assign({}, req.body, Entity.defaultEntity);
   var currentTime = (new Date()).toISOString();
@@ -31,24 +33,24 @@ exports.create = function(req, res, next) {
   var dbQuery;
 
   if (entityBody.emails) {
-    dbQuery = r.table('entities').indexWait('emails').do(() => { // Must wait for the index to be ready, otherwise it's a race condition to write the entity, then write a second before the index updates
-      return r.table('entities').getAll(r.args(entityBody.emails), { index: 'emails' }).count().do(count => {
+    dbQuery = r.table(table).indexWait('emails').do(() => { // Must wait for the index to be ready, otherwise it's a race condition to write the entity, then write a second before the index updates
+      return r.table(table).getAll(r.args(entityBody.emails), { index: 'emails' }).count().do(count => {
         return r.branch(
           count.eq(0),
-          r.table('entities').insert(entityBody, { returnChanges: true }),
+          r.table(table).insert(entityBody, { returnChanges: true }),
           r.error('emails must be unique')
         )
       })
     })
   } else {
-    dbQuery = r.table('entities').insert(entityBody, { returnChanges: true });
+    dbQuery = r.table(table).insert(entityBody, { returnChanges: true });
   }
   dbQuery.then(result => {
     if (result.errors > 0) return next(result.first_error);
     return result.changes[0].new_val;
   })
-  .then(entity => fanout.resolvePermissions(entity.id, req.body.permissions)
-    .then(() => r.table('entities').get(entity.id).without('password'))
+  .then(entity => fanout.resolvePermissions(entity.id, req.body.permissions, table)
+    .then(() => r.table(table).get(entity.id).without('password'))
     .then(entity => res.send(entity))
   )
   .then(() => next())
@@ -56,7 +58,9 @@ exports.create = function(req, res, next) {
 };
 
 exports.read = function(req, res, next) {
-  Entity.buildQuery(req.query, req.params).run()
+  const table = req.tenancy || process.env.RETHINK_TABLE;
+
+  Entity.buildQuery(req.query, req.params, table).run()
   .then(entity => {
     if (!entity) return next(new restify.NotFoundError('Entity not found'));
     delete entity.password;
@@ -67,10 +71,12 @@ exports.read = function(req, res, next) {
 };
 
 exports.getAll = function(req, res, next) {
+  const table = req.tenancy || process.env.RETHINK_TABLE;
+
   if (req.query.token) {
     return Entity.decodeToken(req.query.token)
     .then(decoded =>
-      r.table('entities').getAll(decoded.email, { index: 'emails' }).run())
+      r.table(table).getAll(decoded.email, { index: 'emails' }).run())
     .then(entities => {
       return entities.map(ent => {
         delete ent.password;
@@ -91,14 +97,16 @@ exports.getAll = function(req, res, next) {
     });
   }
 
-  Entity.buildQuery(req.query, req.params).without('password').run()
+  Entity.buildQuery(req.query, req.params, table).without('password').run()
   .then(entities => res.send(entities))
   .catch(next);
 };
 
 exports.update = function(req, res, next) {
+  const table = req.tenancy || process.env.RETHINK_TABLE;
+
   //TODO: Should check for email uniqueness here as well as on creation
-  fanout.resolvePermissions(req.params.id, req.body.permissions)
+  fanout.resolvePermissions(req.params.id, req.body.permissions, table)
   .then(() => {
     // inherited_permissions are server-generated and blocked from consumer input
     var updatedEntity = _.omit(req.body, 'inherited_permissions');
@@ -112,7 +120,7 @@ exports.update = function(req, res, next) {
     return updatedEntity;
   })
   .then(updatedEntity => {
-    return r.table('entities')
+    return r.table(table)
     .get(req.params.id)
     .update(updatedEntity, { returnChanges: true })
     .run();

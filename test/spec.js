@@ -831,11 +831,12 @@ test('it should strip the password_hash property on update', function(t) {
 });
 
 // Helper functions for below tests that require multiple entities
-function populateEntities(amount) {
+function populateEntities(amount, tenancy) {
+  const user = tenancy || 'test';
   const postEntity = () => new Promise((resolve, reject) => {
     request(server)
     .post('/entities')
-    .auth('test', key)
+    .auth(user, key)
     .send(genEntity())
     .expect(200)
     .end((err, res) => resolve(res.body))
@@ -1044,4 +1045,33 @@ test('it should return an entity with the correct permissions after creation', f
       .expect(200, pass(t, 'entity returned correctly'));
     });
   });
+});
+
+test('it should handle multiple tenancies', function(t) {
+  const tenancy1 = uuid.v4().replace(/-/g, '');
+  const tenancy2 = uuid.v4().replace(/-/g, '');
+
+  Promise.all([
+              populateEntities(1, tenancy1),
+              populateEntities(1, tenancy2)
+  ])
+  .then(ents => {
+    return Promise.all([
+      request(server)
+      .get('/entities')
+      .auth(tenancy1, key)
+      .expect(res => {
+        t.equal(res.body.length, 1);
+        t.deepEqual(res.body[0], ents[0][0]);
+      }),
+      request(server)
+      .get('/entities')
+      .auth(tenancy2, key)
+      .expect(res => {
+        t.equal(res.body.length, 1)
+        t.deepEqual(res.body[0], ents[1][0]);
+      })
+    ])
+  })
+  .then(() => t.end());
 });

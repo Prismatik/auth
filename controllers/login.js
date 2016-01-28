@@ -10,11 +10,13 @@ exports.route = function(server) {
 };
 
 exports.login = (req, res, next) => {
+  const table = req.tenancy || process.env.RETHINK_TABLE;
+
   if (!(req.body.id || req.body.email)  || !req.body.password) {
     return next(new restify.ForbiddenError('Invalid username, email or password'));
   }
 
-  let entity = r.table('entities');
+  let entity = r.table(table);
 
   if (req.body.id) {
     entity = entity.get(req.body.id);
