@@ -13,4 +13,6 @@ WORKDIR /opt/auth
 RUN npm install
 RUN ln -s .. node_modules/root
 
+EXPOSE 3000
+
 ENTRYPOINT ["node", "/opt/auth/index.js"]
