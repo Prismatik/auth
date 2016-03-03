@@ -13,4 +13,4 @@ ADD . /opt/app/
 
 EXPOSE 3000
 
-ENTRYPOINT ["node", "/opt/auth/index.js"]
+ENTRYPOINT ["node", "/opt/app/index.js"]
