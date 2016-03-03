@@ -1,0 +1,11 @@
+FROM nodesource/vivid:LTS
+MAINTAINER Prismatik Pty. Ltd. <david@prismatik.com.au>
+
+COPY ./package.json /opt/app/
+
+WORKDIR /opt/app
+
+RUN NODE_ENV=null npm install
+RUN ln -s .. node_modules/root
+
+ADD . /opt/app
