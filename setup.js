@@ -1,7 +1,28 @@
 const r = require('root/lib/r');
 
+const failCount = 0;
+
+const checkConnection = () => {
+  return new Promise((resolve, reject) => {
+
+    const innerCheck = () => {
+      return r.dbList()
+      .then(() => {
+        resolve();
+      })
+      .catch(e => {
+        failCount = failCount++;
+        if (failCount > 1000) throw new Error('Too many connection failures');
+        setTimeout(innerCheck, 1000);
+      })
+    };
+    innerCheck();
+  });
+};
+
 module.exports = function setUp() {
-  return r.dbCreate(process.env.RETHINK_NAME).run()
+  return checkConnection()
+  .then(() => r.dbCreate(process.env.RETHINK_NAME).run())
   .catch((err) => {
     var arr = err.message.split('\n');
     if (arr[0] === 'Database `'+process.env.RETHINK_NAME+'` already exists in:') return;

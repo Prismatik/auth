@@ -1,0 +1,13 @@
+apptesting:
+  build:
+    image: apptesting
+    dockerfile_path: testing-Dockerfile
+  environment:
+    NODE_ENV: production
+    RETHINK_HOST: rethinkdb
+  links:
+    - rethinkdb
+
+rethinkdb:
+  image: rethinkdb
+  cached: true

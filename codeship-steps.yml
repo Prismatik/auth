@@ -1,0 +1,3 @@
+- name: test
+  service: apptesting
+  command: npm test
