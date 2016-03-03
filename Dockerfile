@@ -1,17 +1,15 @@
-FROM ubuntu:14.04
+FROM nodesource/vivid:LTS
+MAINTAINER Prismatik Pty. Ltd. <david@prismatik.com.au>
 
-RUN apt-get update
-RUN apt-get install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
-RUN apt-get update --fix-missing
-RUN apt-get install -y nodejs build-essential git-core python
-RUN . /etc/lsb-release && echo "deb http://download.rethinkdb.com/apt $DISTRIB_CODENAME main" | sudo tee /etc/apt/sources.list.d/rethinkdb.list
+RUN apt-get install -y git-core
+COPY ./package.json /opt/app/
 
-COPY . /opt/auth/
+WORKDIR /opt/app
 
-WORKDIR /opt/auth
 RUN npm install
 RUN ln -s .. node_modules/root
+
+ADD . /opt/app/
 
 EXPOSE 3000
 
