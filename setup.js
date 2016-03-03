@@ -3,13 +3,20 @@ const r = require('root/lib/r');
 const failCount = 0;
 
 const checkConnection = () => {
-  return r.dbList()
-  .catch(e => {
-    failCount = failCount++;
-    if (failCount > 1000) throw new Error('Too many connection failures');
-    setTimeout(() => {
-      return checkConnection();
-    }, 1000)
+  return new Promise((resolve, reject) => {
+
+    const innerCheck = () => {
+      return r.dbList()
+      .then(() => {
+        resolve();
+      })
+      .catch(e => {
+        failCount = failCount++;
+        if (failCount > 1000) throw new Error('Too many connection failures');
+        setTimeout(innerCheck, 1000);
+      })
+    };
+    innerCheck();
   });
 };
 
