@@ -1045,3 +1045,9 @@ test('it should return an entity with the correct permissions after creation', f
     });
   });
 });
+
+test('it should return 200 to a health check', function(t) {
+  request(server)
+  .get('/health')
+  .expect(200, pass(t, 'returned 200'))
+});
