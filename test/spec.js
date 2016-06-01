@@ -236,6 +236,26 @@ test('it should create a token given the correct password and an email', functio
   });
 });
 
+test('it should create a token including both id and email', function(t) {
+  // Set up an entity, then POST to /login with the entity's email and password. It should return a token
+  populateEntities(1)
+  .then(entities => {
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      email: entities[0].emails[0],
+      password: entities[0].plaintext_password
+    })
+    .expect(res => {
+      const token = jwt.decode(res.body.token);
+      t.equal(token.id, entities[0].id);
+      t.equal(token.email, entities[0].emails[0]);
+    })
+    .expect(200, pass(t, 'returned 200'));
+  });
+});
+
 test('it should not create a token given the incorrect password', function(t) {
   populateEntities(1)
   .then(entities => {
