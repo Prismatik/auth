@@ -10,13 +10,7 @@ node_js:
   - "4"
   - "6"
 env:
-  - CXX=g++-4.8
-  - RETHINK_HOST=rethinkdb
-  - RETHINK_PORT=28015
-  - RETHINK_NAME=auth
-  - PORT=3000
-  - JWT_SECRET=testsecret
-  - API_KEY=hai
+  - CXX=g++-4.8  RETHINK_HOST=rethinkdb  RETHINK_PORT=28015  RETHINK_NAME=auth  PORT=3000  JWT_SECRET=testsecret  API_KEY=hai
 addons:
   apt:
     sources:
