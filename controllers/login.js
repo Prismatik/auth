@@ -5,6 +5,8 @@ const r = require('root/lib/r');
 const _ = require('lodash');
 const bcrypt = require('root/lib/bcrypt');
 
+const jwtInclusions = process.env.JWT_INCLUSIONS.split(',');
+
 exports.route = function(server) {
   server.post('/login', exports.login);
 };
@@ -45,7 +47,8 @@ exports.login = (req, res, next) => {
         req.body.email
         : entity.emails[0];
 
-      const token = jwt.sign({email: email, id: entity.id}, process.env.JWT_SECRET);
+      const tokenData = _.pick(_.assign({email: email}, entity), jwtInclusions);
+      const token = jwt.sign(tokenData, process.env.JWT_SECRET);
       res.send({token: token});
       return next();
     })
