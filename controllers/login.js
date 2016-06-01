@@ -45,7 +45,7 @@ exports.login = (req, res, next) => {
         req.body.email
         : entity.emails[0];
 
-      const token = jwt.sign({email: email}, process.env.JWT_SECRET);
+      const token = jwt.sign({email: email, id: entity.id}, process.env.JWT_SECRET);
       res.send({token: token});
       return next();
     })
