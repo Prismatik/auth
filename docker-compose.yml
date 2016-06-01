@@ -4,6 +4,11 @@ services:
     build: .
     environment:
       RETHINK_HOST: rethinkdb
+      RETHINK_PORT: 28015
+      RETHINK_NAME: auth
+      PORT: 3000
+      JWT_SECRET: testsecret
+      API_KEY: hai
     depends_on:
       - rethinkdb
     links:

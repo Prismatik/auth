@@ -3,8 +3,12 @@ apptesting:
     image: apptesting
     dockerfile_path: testing-Dockerfile
   environment:
-    NODE_ENV: production
     RETHINK_HOST: rethinkdb
+    RETHINK_PORT: 28015
+    RETHINK_NAME: auth
+    PORT: 3000
+    JWT_SECRET: testsecret
+    API_KEY: hai
   links:
     - rethinkdb
 
