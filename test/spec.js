@@ -432,6 +432,44 @@ test('it should not return any Entity given an invalid ID', function(t) {
   .expect(404, pass(t, 'returned 404 not found'));
 });
 
+test('it should allow metadata properties to be posted and returned', function(t) {
+  const one = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(one)
+  .expect(200)
+  .end((err, oneRes) => {
+    const perms = {
+      type: 'bar',
+      entity: oneRes.body.id,
+      metadata: {
+        type: "little creatures"
+      }
+    };
+
+    var two = genEntity();
+    two.permissions = [perms];
+
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(two)
+    .end((err, twoRes) => {
+      console.log(twoRes.body.permissions)
+      request(server)
+      .get('/entities/' + twoRes.body.id)
+      .auth('test', key)
+      .expect(res => {
+        res.body.permissions[0].metadata.type = 'little creatures'
+      })
+      .expect(200, pass(t, 'returned correct entity'))
+    })
+  })
+});
+
+
 test('it should return all Entities with a given permission', function(t) {
   // GET /entities?perm.type=membership&perm.entity=some_uuid should return an Array of the Entities you expect it to
   const one = genEntity();
