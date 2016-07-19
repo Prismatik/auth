@@ -236,6 +236,26 @@ test('it should create a token given the correct password and an email', functio
   });
 });
 
+test('it should create a token including both id and email', function(t) {
+  // Set up an entity, then POST to /login with the entity's email and password. It should return a token
+  populateEntities(1)
+  .then(entities => {
+    request(server)
+    .post('/login')
+    .auth('test', key)
+    .send({
+      email: entities[0].emails[0],
+      password: entities[0].plaintext_password
+    })
+    .expect(res => {
+      const token = jwt.decode(res.body.token);
+      t.equal(token.id, entities[0].id);
+      t.equal(token.email, entities[0].emails[0]);
+    })
+    .expect(200, pass(t, 'returned 200'));
+  });
+});
+
 test('it should not create a token given the incorrect password', function(t) {
   populateEntities(1)
   .then(entities => {
@@ -411,6 +431,44 @@ test('it should not return any Entity given an invalid ID', function(t) {
   .auth('test', key)
   .expect(404, pass(t, 'returned 404 not found'));
 });
+
+test('it should allow metadata properties to be posted and returned', function(t) {
+  const one = genEntity();
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(one)
+  .expect(200)
+  .end((err, oneRes) => {
+    const perms = {
+      type: 'bar',
+      entity: oneRes.body.id,
+      metadata: {
+        type: "little creatures"
+      }
+    };
+
+    var two = genEntity();
+    two.permissions = [perms];
+
+    request(server)
+    .post('/entities')
+    .auth('test', key)
+    .send(two)
+    .end((err, twoRes) => {
+      console.log(twoRes.body.permissions)
+      request(server)
+      .get('/entities/' + twoRes.body.id)
+      .auth('test', key)
+      .expect(res => {
+        res.body.permissions[0].metadata.type = 'little creatures'
+      })
+      .expect(200, pass(t, 'returned correct entity'))
+    })
+  })
+});
+
 
 test('it should return all Entities with a given permission', function(t) {
   // GET /entities?perm.type=membership&perm.entity=some_uuid should return an Array of the Entities you expect it to
