@@ -432,43 +432,119 @@ test('it should not return any Entity given an invalid ID', function(t) {
   .expect(404, pass(t, 'returned 404 not found'));
 });
 
-test('it should allow metadata properties to be posted and returned', function(t) {
-  const one = genEntity();
+// test('it should allow metadata properties to be posted and returned', function(t) {
+//   const one = genEntity();
+
+//   request(server)
+//   .post('/entities')
+//   .auth('test', key)
+//   .send(one)
+//   .expect(200)
+//   .end((err, oneRes) => {
+//     const perms = {
+//       type: 'bar',
+//       entity: oneRes.body.id,
+//       metadata: {
+//         type: "little creatures"
+//       }
+//     };
+
+//     const two = genEntity();
+//     two.permissions = [perms];
+
+//     request(server)
+//     .post('/entities')
+//     .auth('test', key)
+//     .send(two)
+//     .end((err, twoRes) => {
+//       request(server)
+//       .get('/entities/' + twoRes.body.id)
+//       .auth('test', key)
+//       .expect(res => {
+//         res.body.permissions[0].metadata.type = 'little creatures'
+//       })
+//       .expect(200, pass(t, 'returned correct entity'))
+//     })
+//   })
+// });
+
+test('it should allow metadata to be posted in a permission', function(t) {
+  const entity = genEntity();
+  entity.permissions = [{
+    type: 'foo',
+    entity: 'bar',
+    metadata: {
+      type: 'fizzBuzz'
+    }
+  }];
 
   request(server)
   .post('/entities')
   .auth('test', key)
-  .send(one)
-  .expect(200)
-  .end((err, oneRes) => {
-    const perms = {
-      type: 'bar',
-      entity: oneRes.body.id,
-      metadata: {
-        type: "little creatures"
-      }
-    };
-
-    var two = genEntity();
-    two.permissions = [perms];
-
-    request(server)
-    .post('/entities')
-    .auth('test', key)
-    .send(two)
-    .end((err, twoRes) => {
-      console.log(twoRes.body.permissions)
-      request(server)
-      .get('/entities/' + twoRes.body.id)
-      .auth('test', key)
-      .expect(res => {
-        res.body.permissions[0].metadata.type = 'little creatures'
-      })
-      .expect(200, pass(t, 'returned correct entity'))
-    })
-  })
+  .send(entity)
+  .expect(200, pass(t, 'returned 200 when submitting metadata'));
 });
 
+test('it should correctly return persisted permission metadata', function(t) {
+  const entity = genEntity();
+  entity.permissions = [{
+    type: 'foo',
+    entity: 'bar',
+    metadata: {
+      type: 'fizzBuzz'
+    }
+  }];
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    request(server)
+    .get('/entities/' + res.body.id)
+    .auth('test', key)
+    .expect(res => {
+      t.equal(res.body.permissions[0].metadata.type, entity.permissions[0].metadata.type);
+    })
+    .expect(200, pass(t, 'returned 200 when retrieving entity with metadata'));
+  });
+});
+
+test('it should correctly retain permission metadata in inherited permissions', function(t) {
+
+  populateEntities(3)
+  .then(entities => {
+    var mrKrabby = entities[0];
+    var spongebob = entities[1];
+    var krustyKrab = entities[2];
+
+    krustyKrab.permissions.push({
+      type: 'owner',
+      entity: spongebob.id,
+      metadata: {
+        type: 'employee'
+      }
+    });
+
+    mrKrabby.permissions.push({
+      type: 'owner',
+      entity: krustyKrab.id
+    });
+
+    updateEntity(krustyKrab)
+    .then(() => updateEntity(mrKrabby))
+    .then(mrKrabby => {
+      t.ok(_.some(mrKrabby.inherited_permissions, {
+        type: 'owner',
+        entity: spongebob.id,
+        metadata: {
+          type: 'employee'
+        }
+      }), 'mrKrabby has permission owner over spongebob with associated metadata');
+      t.end();
+    });
+  });
+});
 
 test('it should return all Entities with a given permission', function(t) {
   // GET /entities?perm.type=membership&perm.entity=some_uuid should return an Array of the Entities you expect it to
