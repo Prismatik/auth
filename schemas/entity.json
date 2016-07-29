@@ -73,6 +73,9 @@
         "entity": {
           "type": "string",
           "example": "62bb01a7-7af2-467b-935d-fed7953d3a17"
+        },
+        "metadata": {
+          "type": "object"
         }
       }
     }
