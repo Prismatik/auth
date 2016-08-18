@@ -7,10 +7,8 @@ before_install:
   - sudo /etc/init.d/rethinkdb restart
 language: node_js
 node_js:
-  - "4.0"
-  - "4.1"
-  - "4.2"
   - "4"
+  - "6"
 env:
 - CXX=g++-4.8
 addons:
