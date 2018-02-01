@@ -1,0 +1,64 @@
+# Default values for auth.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+replicaCount: 1
+image:
+  repository: ordermentum/auth
+  tag: develop
+  pullPolicy: IfNotPresent
+service:
+  name: auth
+  type: NodePort
+  externalPort: 4002
+  internalPort: 4002
+ingress:
+  enabled: false
+  # Used to create an Ingress record.
+  hosts:
+    - auth.local
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
+  tls:
+    # Secrets must be manually created in the namespace.
+    # - secretName: chart-example-tls
+    #   hosts:
+    #     - chart-example.local
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+env:
+  apiKey:
+    name: "API_KEY"
+    value: "hai"
+  jwtSecret:
+    name: "JWT_SECRET"
+    value: "testsecret"
+  nodeEnv:
+    name: "NODE_ENV"
+    value: 'development'
+  rethinkHost:
+    name: "RETHINK_HOST"
+    value: "rethinkdb"
+  rethinkPort:
+    name: "RETHINK_PORT"
+    value: 28015
+  rethinkName:
+    name: "RETHINK_NAME"
+    value: "auth"
+#  rethinkUsername:
+#    name: "RETHINK_USERNAME"
+#    value: "admin"
+#  rethinkPassword:
+#    name: "RETHINK_PASSWORD"
+#    value: "rethinkdb"
