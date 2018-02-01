@@ -432,6 +432,84 @@ test('it should not return any Entity given an invalid ID', function(t) {
   .expect(404, pass(t, 'returned 404 not found'));
 });
 
+test('it should allow metadata to be posted in a permission', function(t) {
+  const entity = genEntity();
+  entity.permissions = [{
+    type: 'foo',
+    entity: 'bar',
+    metadata: {
+      type: 'fizzBuzz'
+    }
+  }];
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .expect(200, pass(t, 'returned 200 when submitting metadata'));
+});
+
+test('it should correctly return persisted permission metadata', function(t) {
+  const entity = genEntity();
+  entity.permissions = [{
+    type: 'foo',
+    entity: 'bar',
+    metadata: {
+      type: 'fizzBuzz'
+    }
+  }];
+
+  request(server)
+  .post('/entities')
+  .auth('test', key)
+  .send(entity)
+  .end((err, res) => {
+    request(server)
+    .get('/entities/' + res.body.id)
+    .auth('test', key)
+    .expect(res => {
+      t.equal(res.body.permissions[0].metadata.type, entity.permissions[0].metadata.type);
+    })
+    .expect(200, pass(t, 'returned 200 when retrieving entity with metadata'));
+  });
+});
+
+test('it should correctly retain permission metadata in inherited permissions', function(t) {
+
+  populateEntities(3)
+  .then(entities => {
+    var mrKrabby = entities[0];
+    var spongebob = entities[1];
+    var krustyKrab = entities[2];
+
+    krustyKrab.permissions.push({
+      type: 'owner',
+      entity: spongebob.id,
+      metadata: {
+        type: 'employee'
+      }
+    });
+
+    mrKrabby.permissions.push({
+      type: 'owner',
+      entity: krustyKrab.id
+    });
+
+    updateEntity(krustyKrab)
+    .then(() => updateEntity(mrKrabby))
+    .then(mrKrabby => {
+      t.ok(_.some(mrKrabby.inherited_permissions, {
+        type: 'owner',
+        entity: spongebob.id,
+        metadata: {
+          type: 'employee'
+        }
+      }), 'mrKrabby has permission owner over spongebob with associated metadata');
+      t.end();
+    });
+  });
+});
+
 test('it should return all Entities with a given permission', function(t) {
   // GET /entities?perm.type=membership&perm.entity=some_uuid should return an Array of the Entities you expect it to
   const one = genEntity();
